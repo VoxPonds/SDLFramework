@@ -1,0 +1,15 @@
+[submodule "vendored/nlohmann_json"]
+	path = vendored/nlohmann_json
+	url = https://github.com/nlohmann/json.git
+[submodule "vendored/glm"]
+	path = vendored/glm
+	url = https://github.com/icaven/glm.git
+[submodule "vendored/spdlog"]
+	path = vendored/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "vendored/SDL"]
+	path = vendored/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "vendored/SDL_image"]
+	path = vendored/SDL_image
+	url = https://github.com/libsdl-org/SDL_image.git
