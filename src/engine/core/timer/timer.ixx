@@ -4,7 +4,6 @@ module;
 
 export module engine.core.timer;
 
-import std;
 import std.compat;
 
 export namespace engine::core
@@ -15,12 +14,12 @@ export namespace engine::core
 		std::uint64_t start_counter_{};
 		std::uint64_t last_counter_{};
 
-		float delta_time_{};
-		float total_time_{};
-		float time_scale_{1.0f};
+		double delta_time_{};
+		double total_time_{};
+		double time_scale_{1.0};
 
 		std::uint16_t target_fps_{};
-		std::optional<float> target_frame_time_{};
+		std::optional<double> target_frame_time_{};
 
 	    public:
 			Timer()
@@ -30,12 +29,12 @@ export namespace engine::core
 	        void beginFrame();
 	        void endFrame();
 
-	        float deltaTime() const;
-	        float unscaledDeltaTime() const;
-	        float totalTime() const;
+	        double deltaTime() const;
+	        double unscaledDeltaTime() const;
+	        double totalTime() const;
 
-	        void setTimeScale(float scale);
-	        float getTimeScale() const;
+	        void setTimeScale(double scale);
+	        double getTimeScale() const;
 
 	        void setTargetFPS(int fps);
 	        int getTargetFPS() const;
@@ -51,15 +50,15 @@ export namespace engine::core
 }
 void engine::core::Timer::beginFrame()
 {
-	start_counter_ = SDL_GetPerformanceCounter();
-	delta_time_ = (start_counter_ - last_counter_) * 1e-9;
+	start_counter_ = SDL_GetTicksNS();
+	delta_time_ = start_counter_ - last_counter_;
 	SDL_Log("Delta Time: %f", delta_time_);
 	last_counter_ = start_counter_;
 }
 
-void engine::core::Timer::setTimeScale(float scale)
+void engine::core::Timer::setTimeScale(double scale)
 {
-	time_scale_ = std::max(0.0f,scale);
+	time_scale_ = std::max(0.0,scale);
 }
 
 void engine::core::Timer::setTargetFPS(int fps)

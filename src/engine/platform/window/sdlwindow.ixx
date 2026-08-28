@@ -1,37 +1,36 @@
 module;
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_video.h"
-
 #include "spdlog/spdlog.h"
 
-export module engine.platform.sdlwindowmanager;
-import std.compat;
+export module engine.platform.sdlwindow;
 import engine.platform.sdlptr;
+import std;
 
 export namespace engine::platform
 {
-	class SdlWindowManager final
+	class SdlWindow final
 	{
 		private:
 			//using WindowPtr = std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)>;
 			WindowPtr window_ptr{};
-			explicit SdlWindowManager(WindowPtr window_ptr);
-			static std::expected<SdlWindowManager, std::string> create();
+			explicit SdlWindow(WindowPtr window_ptr);
+			static std::expected<SdlWindow, std::string> create();
 
 		public:
-			SdlWindowManager();
-			~SdlWindowManager() = default;
+			SdlWindow();
+			~SdlWindow() = default;
 
-			WindowObPtr getWindow() const;
+			WindowObPtr getWindowPtr() const;
 
-			SdlWindowManager(const SdlWindowManager&) = delete;
-			SdlWindowManager& operator=(const SdlWindowManager&) = delete;
-			SdlWindowManager(SdlWindowManager&&) = default;
-			SdlWindowManager& operator=(SdlWindowManager&&) = delete;
+			SdlWindow(const SdlWindow&) = delete;
+			SdlWindow& operator=(const SdlWindow&) = delete;
+			SdlWindow(SdlWindow&&) = default;
+			SdlWindow& operator=(SdlWindow&&) = delete;
 
 	};
 
-	SdlWindowManager::SdlWindowManager()
+	SdlWindow::SdlWindow()
 	{
 		window_ptr = WindowPtr(
 			SDL_CreateWindow(
@@ -49,17 +48,17 @@ export namespace engine::platform
 		}
 	}
 
-	WindowObPtr SdlWindowManager::getWindow() const
+	WindowObPtr SdlWindow::getWindowPtr() const
 	{
 		return window_ptr;
 	}
 
-	SdlWindowManager::SdlWindowManager(WindowPtr window_ptr) : window_ptr(std::move(window_ptr))
+	SdlWindow::SdlWindow(WindowPtr window_ptr) : window_ptr(std::move(window_ptr))
 	{
 		
 	}
 
-	std::expected<SdlWindowManager, std::string> SdlWindowManager::create()
+	std::expected<SdlWindow, std::string> SdlWindow::create()
 	{
 		auto ptr = WindowPtr(
 			SDL_CreateWindow("Hello World", 800, 600, SDL_WINDOW_RESIZABLE)
@@ -71,7 +70,7 @@ export namespace engine::platform
 			return std::unexpected<std::string>("Failed to create SDL window");
 		}
 
-		return SdlWindowManager(std::move(ptr));
+		return SdlWindow(std::move(ptr));
 	}
 
 }

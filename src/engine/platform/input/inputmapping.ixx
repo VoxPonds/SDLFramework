@@ -50,14 +50,14 @@ export namespace engine::platform
     struct ChordInputMapping
     {
         std::vector<SingleInputBind> input_sequence_;//x.+x. or x.+y.
-        double tolerance = 0.25;          
-    	double lastTriggerTime = -tolerance;
-        size_t sequenceIndex = 0;
+        std::uint64_t tolerance_ms_ { 250 };
+        std::uint64_t lastTriggerTime{ -tolerance_ms_ };
+        std::size_t sequenceIndex{ 0 };
     };
 
     struct ActionProfile
     {
         std::vector<ChordInputMapping> mapping_lists_;//x.+x. or x.+y- || a.+a.
-        ActionMode actionMode = ActionMode::MODE_HOLD;
+        ActionMode actionMode{ActionMode::MODE_HOLD};
     };
 }

@@ -1,4 +1,4 @@
-export module engine.resource.sdlresourcemanager:audiomanager;
+export module engine.resource.resourcemanager:audiomanager;
 
 
 export namespace engine::resource

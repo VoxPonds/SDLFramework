@@ -1,11 +1,10 @@
 module;
 
 
-export module engine.resource.sdlresourcemanager;
-import :texturemanager;
+export module engine.resource.resourcemanager;
+export import :texturemanager;
 import :audiomanager;
 import :fontmanager;
-import engine.renderer.sdlrenderer;
 
 export namespace engine::resource
 {
@@ -17,17 +16,24 @@ export namespace engine::resource
 			FontManager font_manager_;
 
 		public:
-			ResourceManager(const renderer::SdlRenderer& renderer_manager_ref);
+			ResourceManager(const platform::SdlRendererObPtr renderer_borrowed);
 			~ResourceManager() = default;
 
 			ResourceManager(const ResourceManager&) = delete;
 			ResourceManager& operator=(const ResourceManager&) = delete;
 			ResourceManager(ResourceManager&&) = delete;
 			ResourceManager& operator=(ResourceManager&&) = delete;
+
+			utilities::ObPtr<TextureManager> getTextureManager();
 	};
 
-	ResourceManager::ResourceManager(const renderer::SdlRenderer& renderer_manager_ref) 
-		: texture_manager_(renderer_manager_ref.getSDLRendererRef())
+	ResourceManager::ResourceManager(const platform::SdlRendererObPtr renderer_borrowed)
+		: texture_manager_(renderer_borrowed)
 	{
+	}
+
+	utilities::ObPtr<TextureManager> ResourceManager::getTextureManager()
+	{
+		return &texture_manager_;
 	}
 }

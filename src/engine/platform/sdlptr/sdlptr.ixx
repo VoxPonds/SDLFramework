@@ -3,7 +3,8 @@ module;
 #include "SDL3/SDL_render.h"
 
 export module engine.platform.sdlptr;
-import std.compat;
+import engine.utilities;
+import std;
 
 export namespace engine::platform
 {
@@ -47,47 +48,19 @@ export namespace engine::platform
 		}
 	};
 
-	template<typename T>
-	class ObserverPtr
-	{
-		private:
-			T* ptr_ = nullptr;
-
-		public:
-			ObserverPtr() = default;
-			ObserverPtr(T* ptr) : ptr_(ptr) {}
-			template<typename D>
-			ObserverPtr(const std::unique_ptr<T, D>& ptr)
-				: ptr_(ptr.get()){}
-			//~ObserverPtr() = delete;
-
-			T* get() const { return ptr_; }
-			T& operator*() const { return *ptr_; }
-			T* operator->() const { return ptr_; }
-
-			explicit operator bool() const
-			{
-				return ptr_ != nullptr;
-			}
-	};
 
 	template<typename T>
 	using SdlPtr = std::unique_ptr<T, SdlDeleter<T>>;
 
-	template<typename T, typename D>
-	ObserverPtr(std::unique_ptr<T, D>) -> ObserverPtr<T>;
-
-	template<typename T>
-	using SdlObPtr = ObserverPtr<T>;
-
 	
-	using RendererPtr = SdlPtr<SDL_Renderer>;
-	using RendererObPtr = SdlObPtr<SDL_Renderer>;
+	using SdlRendererPtr = SdlPtr<SDL_Renderer>;
+	using SdlRendererObPtr = utilities::ObPtr<SDL_Renderer>;
 
 	using WindowPtr = SdlPtr<SDL_Window>;
-	using WindowObPtr = SdlObPtr<SDL_Window>;
+	using WindowObPtr = utilities::ObPtr<SDL_Window>;
 
 	using TexturePtr = SdlPtr<SDL_Texture>;
-	using TextureObPtr = SdlObPtr<SDL_Texture>;
+	using TextureObPtr = utilities::ObPtr<SDL_Texture>;
+
 
 }

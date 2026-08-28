@@ -1,4 +1,4 @@
-export module engine.resource.sdlresourcemanager:fontmanager;
+export module engine.resource.resourcemanager:fontmanager;
 
 
 export namespace engine::resource

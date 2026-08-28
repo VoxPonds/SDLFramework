@@ -19,18 +19,17 @@ export namespace engine::platform
     struct InputSystem 
     {
 	    private:
-	        std::unordered_set<SDL_Keycode> pressed_keys_;
-	        std::unordered_set<SDL_Keycode> released_keys_;
-	        std::unordered_set<SDL_Keycode> repeated_keys_;
+	        std::bitset<SDL_SCANCODE_COUNT> pressed_keys_;
+	        std::bitset<SDL_SCANCODE_COUNT> released_keys_;
+	        std::bitset<SDL_SCANCODE_COUNT> repeated_keys_;
 
-	        const bool* keyboard_state_{};
+			std::span<const bool> keyboard_state_{};
 	        int keyboard_count_{};
 
 		public:
 	        InputConfig input_config_;
 	        std::unordered_map<StandardAction, ActionProfile>& action_mapping_ = input_config_.gameplay_standard_context_.actionMapping;
 
-	        double double_click_speed = 0.3;
 	        uint8_t game_index = 0;
 
 			void beginFrame();
@@ -54,10 +53,10 @@ export namespace engine::platform
 
     void InputSystem::beginFrame()
     {
-	    pressed_keys_.clear();
-	    released_keys_.clear();
-	    repeated_keys_.clear();
-	    keyboard_state_ = SDL_GetKeyboardState(&keyboard_count_);
+	    pressed_keys_.reset();
+	    released_keys_.reset();
+	    repeated_keys_.reset();
+		keyboard_state_ = { SDL_GetKeyboardState(&keyboard_count_), static_cast<size_t>(keyboard_count_) };
     }
 
     void InputSystem::processEvent(const SDL_Event& event)
@@ -68,17 +67,17 @@ export namespace engine::platform
 			    {
 					if (event.key.repeat)
 					{
-						repeated_keys_.insert(event.key.scancode);
+						repeated_keys_.set(event.key.scancode);
 					}
 					else
 					{
-						pressed_keys_.insert(event.key.scancode);
+						pressed_keys_.set(event.key.scancode);
 					}
 					break;
 			    }
 		    case SDL_EVENT_KEY_UP:
 			    {
-					released_keys_.insert(event.key.scancode);
+					released_keys_.set(event.key.scancode);
 					break;
 			    }
 		    default:
@@ -92,11 +91,13 @@ export namespace engine::platform
     {
 	    bool result = false;
 
-	    std::vector<ChordInputMapping>& action_chordlists_ = this->action_mapping_[action].mapping_lists_;
+	    std::vector<ChordInputMapping>& action_chord_lists_ = this->action_mapping_[action].mapping_lists_;
 
-	    for (auto& chord_bind_ : action_chordlists_)
+	    for (auto& chord_bind_ : action_chord_lists_)
 	    //for(const auto& firstMatch : chordbind.input_sequence_)
 	    {
+			if (chord_bind_.input_sequence_.empty()) continue;
+
 		    const SingleInputBind& single_bind_ = chord_bind_.input_sequence_[0];
 		    switch (single_bind_.triggerType)
 		    {
@@ -141,12 +142,12 @@ export namespace engine::platform
 
     bool InputSystem::checkKeyPressed(SDL_Scancode key) const
     {
-		return pressed_keys_.contains(key);
+		return pressed_keys_.test(key);
     }
 
     bool InputSystem::checkKeyReleased(SDL_Scancode key) const
     {
-		return released_keys_.contains(key);
+		return released_keys_.test(key);
     }
 
     bool InputSystem::chordPatternMatch(ChordInputMapping& pattern) const
@@ -158,14 +159,14 @@ export namespace engine::platform
 
 	    if (checkKeyPressed(needKey))
 	    {
-		    double now = SDL_GetPerformanceCounter();
-		    double diff = now - pattern.lastTriggerTime;
-		    if (diff > pattern.tolerance)
+			std::uint64_t now = SDL_GetTicks();
+			std::uint64_t diff = now - pattern.lastTriggerTime;
+		    if (diff > pattern.tolerance_ms_)
 		    {
 			    index = 0;
 			    pattern.sequenceIndex = 0;//delete to avoid multiple reset
 		    }
-		    if (index == 0 || diff < pattern.tolerance)
+		    if (index == 0 || diff <= pattern.tolerance_ms_)
 		    {
 			    //std::cout << std::format("index:{}\n", pattern.sequenceIndex);
 			    pattern.lastTriggerTime = now;
@@ -186,7 +187,7 @@ export namespace engine::platform
 
     bool InputSystem::checkKeyPressedRepeat(SDL_Scancode key) const
     {
-		return repeated_keys_.contains(key);
+		return repeated_keys_.test(key);
     }
 
     bool InputSystem::checkTrigger(SDL_Scancode key) const

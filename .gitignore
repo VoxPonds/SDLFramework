@@ -1,6 +1,9 @@
 /out/
 /.vs/
 /.vscode/
+/assets/
+/src/game
+CMakeUserPresets.json
 *.user
 *.pdb
 *.c
