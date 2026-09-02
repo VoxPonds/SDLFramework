@@ -3,28 +3,28 @@ module;
 #include "SDL3/SDL_render.h"
 #include "spdlog/spdlog.h"
 
-export module engine.renderer.sdlrenderdevice;
+export module engine.render.sdlrenderdevice;
 import engine.platform.sdlptr;
 
-export namespace engine::renderer
+export namespace engine::render
 {
     class SdlRenderDevice
     {
 	    private:
-	        platform::SdlRendererPtr renderer_ptr;
+	        platform::SdlRendererDevicePtr renderer_ptr;
 
 	    public:
-	        explicit SdlRenderDevice(const platform::WindowObPtr& window_borrowed);
+	        explicit SdlRenderDevice(platform::WindowObPtr window_borrowed);
 
-	        platform::SdlRendererObPtr getRendererPtr() const;
+	        platform::SdlRendererDeviceObPtr getRendererPtr() const;
     };
 
-    SdlRenderDevice::SdlRenderDevice(const platform::WindowObPtr& window_borrowed)
+    SdlRenderDevice::SdlRenderDevice(platform::WindowObPtr window_borrowed)
 	    : renderer_ptr(
-	    	platform::SdlRendererPtr(SDL_CreateRenderer(window_borrowed.get(), nullptr))
+	    	SDL_CreateRenderer(window_borrowed.get(), nullptr)
 	    )
     {
-		//renderer_ptr = SdlRendererPtr(SDL_CreateRenderer(&sdlwindow.getWindow(), nullptr), SDL_DestroyRenderer);
+		//renderer_ptr = SdlRendererDevicePtr(SDL_CreateRenderer(&sdlwindow.getWindow(), nullptr), SDL_DestroyRenderer);
 		if (!renderer_ptr)
 		{
 			auto error = std::string("Failed to create SDL renderer: ") + SDL_GetError();
@@ -33,7 +33,7 @@ export namespace engine::renderer
 		}
     }
 
-    platform::SdlRendererObPtr SdlRenderDevice::getRendererPtr() const
+    platform::SdlRendererDeviceObPtr SdlRenderDevice::getRendererPtr() const
     {
 		return renderer_ptr;
     }

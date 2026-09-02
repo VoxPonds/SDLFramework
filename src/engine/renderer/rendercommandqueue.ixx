@@ -1,56 +1,56 @@
 module;
 
-export module engine.renderer.renderer:rendercommandqueue;
+export module engine.render.rendercommandqueue;
 import std;
 
-export namespace engine::renderer
+export namespace engine::render
 {
-    template<typename Command>
+    template<typename CommandType>
     struct RenderCommandQueue
     {
 		private:
-			std::vector<Command> commands_;
+			std::vector<CommandType> commands_;
 
 	    public:
-            void submit(const Command& command);
-            void submit(Command&& command);
+            void insert(const CommandType& command);
+            void insert(CommandType&& command);
 
 			void clear() noexcept;
 
 			[[nodiscard]]
-            std::span<const Command> commands() const noexcept;
+            std::span<const CommandType> commands() const noexcept;
 
 			[[nodiscard]]
 	        bool empty() const noexcept
 			;
     };
 
-    template <typename Command>
-    void RenderCommandQueue<Command>::submit(const Command& command)
+    template <typename CommandType>
+    void RenderCommandQueue<CommandType>::insert(const CommandType& command)
     {
         commands_.emplace_back(command);
     }
 
-    template <typename Command>
-    void RenderCommandQueue<Command>::submit(Command&& command)
+    template <typename CommandType>
+    void RenderCommandQueue<CommandType>::insert(CommandType&& command)
     {
         commands_.emplace_back(std::move(command));
     }
 
-    template <typename Command>
-    void RenderCommandQueue<Command>::clear() noexcept
+    template <typename CommandType>
+    void RenderCommandQueue<CommandType>::clear() noexcept
     {
 	    commands_.clear();
     }
 
-    template <typename Command>
-    auto RenderCommandQueue<Command>::commands() const noexcept -> std::span<const Command>
+    template <typename CommandType>
+    auto RenderCommandQueue<CommandType>::commands() const noexcept -> std::span<const CommandType>
     {
 	    return commands_;
     }
 
-    template <typename Command>
-    bool RenderCommandQueue<Command>::empty() const noexcept
+    template <typename CommandType>
+    bool RenderCommandQueue<CommandType>::empty() const noexcept
     {
 	    return commands_.empty();
     }

@@ -35,12 +35,11 @@ export namespace engine::utilities
 			> && ...
 		);};
 
-	template<typename... Ts> requires hashableTypes<Ts...>
+	template<hashableTypes... Ts>
 	std::size_t makeHash(const Ts&... values) noexcept
 	{
 		std::size_t seed = 0;
 		(hashCombine(seed, values), ...);
-
 		return seed;
 	}
 

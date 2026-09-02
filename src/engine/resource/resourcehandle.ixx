@@ -1,21 +1,22 @@
 module;
 #include <limits>
-#include "SDL3/SDL_render.h"
 
 export module engine.resource.resourcehandle;
-import std.compat;
+import engine.resource.imageasset;
+import std;
 
 export namespace engine::resource
 {
 	enum class ResourceError : std::uint8_t
 	{
-		NotFound,
-		InvalidHandle,
-		StaleHandle,
-		NullPtr,
-		IndexOutOfRange,
-		LoadFailed,
-		AlreadyLoaded
+		NOT_FOUND,
+		INVALID_HANDLE,
+		STALE_HANDLE,
+		NULL_PTR,
+		INDEX_OUT_OF_RANGE,
+		LOAD_FAILED,
+		ALREADY_LOADED,
+		EXCEPTION
 	};
 
     template<typename Tag>
@@ -27,13 +28,10 @@ export namespace engine::resource
 			static constexpr auto invalid_value = std::numeric_limits<ValueType>::max();
 
 	    private:
-			template<typename Key, typename Resource>
-			friend class SdlResourceCache;
-
 			static constexpr auto id_bits = std::numeric_limits<IdType>::digits;
 			static constexpr auto generation_bits = std::numeric_limits<ValueType>::digits - id_bits;
 			static constexpr auto id_mask = (1ull << id_bits) - 1;
-			ValueType handle_value_;
+			ValueType handle_value_ = invalid_value;
 
 	    public:
 	        constexpr ResourceHandle() noexcept = default;
@@ -49,7 +47,12 @@ export namespace engine::resource
 	            return handle_value_ != invalid_value;
 	        }
 
-		private:
+			[[nodiscard]]
+			constexpr auto getHandleValue() const noexcept
+			{
+				return handle_value_;
+			}
+
 			[[nodiscard]]
 			constexpr auto getId() const noexcept
 			{
@@ -73,9 +76,9 @@ export namespace engine::resource
 	            return isValid();
 	        }
 
-	        friend constexpr bool operator==(ResourceHandle,ResourceHandle) noexcept = default;
+			friend constexpr bool operator==(ResourceHandle, ResourceHandle) noexcept = default;
     };
 
-	using TextureHandle = ResourceHandle<SDL_Texture>;
+	using ImageHandle = ResourceHandle<ImageAsset>;
 
 }

@@ -1,5 +1,4 @@
 module;
-#include "SDL3/SDL_video.h"
 #include "SDL3/SDL_render.h"
 
 export module engine.platform.sdlptr;
@@ -23,12 +22,6 @@ export namespace engine::platform
 		static constexpr auto destroy_func = SDL_DestroyRenderer;
 	};
 
-	template<>
-	struct SdlDeleterTraits<SDL_Texture>
-	{
-		static constexpr auto destroy_func = SDL_DestroyTexture;
-	};
-
 	template<typename T>
 	struct SdlDeleter
 	{
@@ -48,19 +41,15 @@ export namespace engine::platform
 		}
 	};
 
-
 	template<typename T>
 	using SdlPtr = std::unique_ptr<T, SdlDeleter<T>>;
 
 	
-	using SdlRendererPtr = SdlPtr<SDL_Renderer>;
-	using SdlRendererObPtr = utilities::ObPtr<SDL_Renderer>;
+	using SdlRendererDevicePtr = SdlPtr<SDL_Renderer>;
+	using SdlRendererDeviceObPtr = utilities::ObPtr<SDL_Renderer>;
 
 	using WindowPtr = SdlPtr<SDL_Window>;
 	using WindowObPtr = utilities::ObPtr<SDL_Window>;
-
-	using TexturePtr = SdlPtr<SDL_Texture>;
-	using TextureObPtr = utilities::ObPtr<SDL_Texture>;
 
 
 }

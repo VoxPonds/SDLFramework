@@ -1,24 +1,26 @@
 module;
 
-export module engine.renderer.spriterenderer;
+export module engine.render.spriterenderer;
 
 import engine.resource.resourcemanager;
-import engine.renderer.renderer;
-import engine.renderer.sprite;
+import engine.render.rendererbackend;
+import engine.render.framerecorder;
+import engine.render.framedata;
+import engine.render.sprite;
 import engine.utilities;
 import engine.core.math;
 import std;
 
 
-export namespace engine::renderer
+export namespace engine::render
 {
     class SpriteRenderer
     {
 	    private:
-			RenderObPtr renderer_borrowed;
+			utilities::ObPtr<FrameRecorder> recorder_borrowed;
 
 	    public:
-	        SpriteRenderer(RenderObPtr renderer);
+	        SpriteRenderer(utilities::ObPtr<FrameRecorder> recorder);
 
 			SpriteRenderer(const SpriteRenderer&) = delete;
 			SpriteRenderer& operator=(const SpriteRenderer&) = delete;
@@ -35,8 +37,8 @@ export namespace engine::renderer
 			);
     };
 
-    SpriteRenderer::SpriteRenderer(RenderObPtr renderer)
-		: renderer_borrowed(renderer)
+    SpriteRenderer::SpriteRenderer(utilities::ObPtr<FrameRecorder> recorder)
+		: recorder_borrowed(recorder)
     {
     }
 
@@ -46,13 +48,14 @@ export namespace engine::renderer
 	    FlipMode flip_mode
 	) 
     {
-		return renderer_borrowed->submit(
+		recorder_borrowed->record(
 			SpriteRenderCommand{
 				.sprite = sprite,
 				.transform_2d = transform,
 				.flip_mode = flip_mode
 			}
 		);
+		return{};
 	}
 
 	std::expected<void, RendererError> SpriteRenderer::drawSprite(
@@ -60,7 +63,7 @@ export namespace engine::renderer
 		const core::Vector2& scale, double rotation, FlipMode flip_mode
     )
 	{
-		return renderer_borrowed->submit(
+		recorder_borrowed->record(
 			SpriteRenderCommand{
 				.sprite = sprite,
 				.transform_2d = core::Transform2D{
@@ -71,5 +74,6 @@ export namespace engine::renderer
 				.flip_mode = flip_mode
 			}
 		);
+		return{};
 	}
 }

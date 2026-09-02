@@ -1,16 +1,16 @@
 module;
 #include <glm/glm.hpp>
 
-export module engine.renderer.sprite;
+export module engine.render.sprite;
 
-import engine.resource.sdlresourcecache;
+import engine.resource.resourcecache;
 import engine.resource.resourcehandle;
 import engine.core.math;
 import std;
 
-export namespace engine::renderer
+export namespace engine::render
 {
-	struct TextureRect
+	struct ImageRect
 	{
 		core::Vector2 position;
 		core::Vector2 size;
@@ -25,46 +25,46 @@ export namespace engine::renderer
 	class Sprite final 
 	{
 		private:
-			resource::TextureHandle texture_;
-			std::optional<TextureRect> source_rect_;
+			resource::ImageHandle image_;
+			std::optional<ImageRect> source_rect_;
 
 		public:
 			Sprite() = default;
-			Sprite(resource::TextureHandle texture_handle, const std::optional<TextureRect>& source_rect = std::nullopt);
+			Sprite(resource::ImageHandle image_handle, const std::optional<ImageRect>& source_rect = std::nullopt);
 
 			[[nodiscard]]
-			resource::TextureHandle getTextureHandle() const;
+			resource::ImageHandle getImageHandle() const;
 
 			[[nodiscard]]
-			const std::optional<TextureRect>& getSourceRect() const;
+			const std::optional<ImageRect>& getSourceRect() const;
 
-			void setTextureHandle(resource::TextureHandle texture);
+			void setImageHandle(resource::ImageHandle texture);
 
-			void setSourceRect(const std::optional<TextureRect>& source_rect);
+			void setSourceRect(const std::optional<ImageRect>& source_rect);
 	};
 
-	Sprite::Sprite(resource::TextureHandle texture_handle, const std::optional<TextureRect>& source_rect)
-		:	texture_(texture_handle),
+	Sprite::Sprite(resource::ImageHandle image_handle, const std::optional<ImageRect>& source_rect)
+		:	image_(image_handle),
 			source_rect_(source_rect)
 	{
 	}
 
-	resource::TextureHandle Sprite::getTextureHandle() const
+	resource::ImageHandle Sprite::getImageHandle() const
 	{
-		return texture_;
+		return image_;
 	}
 
-	const std::optional<TextureRect>& Sprite::getSourceRect() const
+	const std::optional<ImageRect>& Sprite::getSourceRect() const
 	{
 		return source_rect_;
 	}
 
-	void Sprite::setTextureHandle(resource::TextureHandle texture)
+	void Sprite::setImageHandle(resource::ImageHandle texture)
 	{
-		texture_ = texture;
+		image_ = texture;
 	}
 
-	void Sprite::setSourceRect(const std::optional<TextureRect>& source_rect)
+	void Sprite::setSourceRect(const std::optional<ImageRect>& source_rect)
 	{
 		source_rect_ = source_rect;
 	}

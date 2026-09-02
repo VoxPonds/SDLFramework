@@ -3,29 +3,35 @@ module;
 #include "glm/glm.hpp"
 #include "variant"
 
-export module engine.renderer.sdlrenderer;
+export module engine.render.sdlrenderer;
 
 import engine.platform.sdlwindow;
 import engine.platform.sdlptr;
-import engine.renderer.renderer;
-import engine.renderer.sprite;
-import engine.renderer.cameramanager;
+import engine.render.rendererbackend;
+import engine.render.sprite;
+import engine.render.framerecorder;
+import engine.render.cameramanager;
+import engine.render.framedata;
+import engine.render.sdlrenderdevice;
+import engine.render.sdlrendereradapter;
+import engine.render.texturemanager;
 import engine.resource.resourcemanager;
 import engine.core.math;
 import engine.utilities;
 
 
-export namespace engine::renderer
+export namespace engine::render
 {
-	class SdlRenderer : public Renderer
+	class SdlRenderer : public IRendererBackend
 	{
 		private:
-			//using SdlRendererPtr = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
-			platform::SdlRendererObPtr renderer_ptr{};
-			utilities::ObPtr<resource::TextureManager> texture_manager_borrowed;
+			//using SdlRendererDevicePtr = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
+			platform::SdlRendererDeviceObPtr renderer_ptr;
+			resource::ResourceManager& resource_manager_borrowed;
+			TextureManager texture_manager;
 
 		public:
-			SdlRenderer(const platform::SdlRendererObPtr renderer_borrowed, const utilities::ObPtr<resource::TextureManager> texture_manager_borrowed);
+			SdlRenderer(platform::SdlRendererDeviceObPtr renderer, resource::ResourceManager& manager);
 			~SdlRenderer()override = default;
 
 			SdlRenderer(const SdlRenderer&) = delete;
@@ -34,17 +40,16 @@ export namespace engine::renderer
 			SdlRenderer& operator=(SdlRenderer&&) = default;
 
 			void renderTest()const;
-			std::expected<void, RendererError> renderFrame()override;
-			std::expected<void, RendererError> renderFrame(const std::span<const RenderCommand2D>& commands)override;
+			auto render(const std::span<const RenderCommand2D>& commands)-> std::expected<void, RendererError>override;
 			void drawTexture(
 				const Camera2DManager& camera_manager, const Sprite& sprite, const core::Vector2& position,
 				const core::Vector2& scale = { 1.0f, 1.0f }, double angle = 0.0f, SDL_FlipMode flip_mode = SDL_FlipMode::SDL_FLIP_NONE
 			)const;
-			void drawTexture(const SpriteRenderCommand& command)const;
+			void drawTexture(const SpriteRenderCommand& command);
 
-			platform::SdlRendererObPtr getRendererPtr()const;
+			platform::SdlRendererDeviceObPtr getRendererPtr()const;
 
-			std::expected<void, RendererError> submit(const RenderCommand2D& render_command_2d) override;
+			//std::expected<void, RendererError> submit(const RenderCommand2D& render_command_2d) override;
 			void beginFrame() override;
 			void clear() override;
 			std::expected<void, RendererError> execute(const RenderCommand2D& render_command_2d)override;
@@ -54,11 +59,12 @@ export namespace engine::renderer
 	};
 
 	SdlRenderer::SdlRenderer(
-		const platform::SdlRendererObPtr renderer_borrowed, 
-		const utilities::ObPtr<resource::TextureManager> texture_manager_borrowed
-	)
-	:	renderer_ptr(renderer_borrowed), 
-		texture_manager_borrowed(texture_manager_borrowed)
+		platform::SdlRendererDeviceObPtr renderer,
+		resource::ResourceManager& manager
+	):	
+		renderer_ptr(renderer),
+		resource_manager_borrowed(manager),
+		texture_manager(*renderer, manager)
 	{
 
 	}
@@ -82,45 +88,34 @@ export namespace engine::renderer
 		SDL_SetRenderDrawColor(renderer_ptr.get(), 255, 255, 255, 255);
 		SDL_RenderDebugText(renderer_ptr.get(), x, y, message);
 		SDL_RenderPresent(renderer_ptr.get());
-
 	}
 
-	auto SdlRenderer::renderFrame()->std::expected<void, RendererError>
+	auto SdlRenderer::render(const std::span<const RenderCommand2D>& commands)->std::expected<void, RendererError>
 	{
-		beginFrame();
-		clear();
-		for (const auto& command : commands2d_.commands())
-		{
-			auto state = execute(command);
-			if (!state) 
-			{
-				commands2d_.clear();
-				endFrame();
-				return std::unexpected(state.error());
-			}
-		}
-		present();
-		endFrame();
-		commands2d_.clear();
-
-		return {};
-	}
-
-	auto SdlRenderer::renderFrame(const std::span<const RenderCommand2D>& commands)->std::expected<void, RendererError>
-	{
+		auto t0 = std::chrono::steady_clock::now();
 		beginFrame();
 		clear();
 		for (const auto& command : commands)
 		{
+			
 			auto state = execute(command);
+			
 			if (!state)
 			{
 				endFrame();
 				return std::unexpected(state.error());
 			} 
 		}
+		auto t1 = std::chrono::steady_clock::now();
 		present();
+		auto t2 = std::chrono::steady_clock::now();
 		endFrame();
+		std::println(
+			"end commands={} execute={}us present={}us",
+			commands.size(),
+			std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count(),
+			std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()
+		);
 
 		return {};
 	}
@@ -133,24 +128,33 @@ export namespace engine::renderer
 		auto screen_position = camera_manager.worldToScreen(position);
 
 		// acquire SDL_Texture
-
-		// compute rectangle and call SDL_RenderTextureRotated()
-		SDL_RenderTextureRotated(renderer_ptr.get(), platform::TexturePtr{}.get(),
+		// compute rectangle and call SDL_RenderTextureRotated()s
+		SDL_RenderTextureRotated(renderer_ptr.get(), resource::SdlTexturePtr{}.get(),
 			nullptr, nullptr, angle, nullptr, flip_mode
 		);
 	}
 
-	void SdlRenderer::drawTexture(const SpriteRenderCommand& command) const
+	void SdlRenderer::drawTexture(const SpriteRenderCommand& command)
 	{
-		auto texture = texture_manager_borrowed->getTexture(
-			command.sprite.getTextureHandle()
-		);
-		if (!texture)
+		auto image_handle = command.sprite.getImageHandle();
+		auto image = resource_manager_borrowed.getImage(image_handle);
+		auto texture_result = texture_manager.findTexture(image_handle);
+		if (!texture_result)
 		{
+			std::println("HandleError:{}", static_cast<int>(texture_result.error()));
+			texture_manager.loadTexture(image_handle);
 			return;
 		}
+		auto texture = texture_manager.getTexture(texture_result.value());
+
+		if (!texture)
+		{
+			std::println("RendererError:{}", static_cast<int>(texture.error()));
+			return;
+		}
+
 		const auto source_rect = command.sprite.getSourceRect();
-		const auto textureSize = resource::TextureManager::getTextureSize(texture.value().get());
+		const auto textureSize = resource_manager_borrowed.getImageSize(image.value().get());
 
 		utilities::ObPtr<SDL_FRect> src_rect;
 		
@@ -205,7 +209,7 @@ export namespace engine::renderer
 		}
 	}
 
-	platform::SdlRendererObPtr SdlRenderer::getRendererPtr()const
+	platform::SdlRendererDeviceObPtr SdlRenderer::getRendererPtr()const
 	{
 		return renderer_ptr;
 	}
@@ -225,11 +229,7 @@ export namespace engine::renderer
 		//);
 		SDL_RenderClear(renderer_ptr.get());
 	}
-	auto SdlRenderer::submit(const RenderCommand2D& render_command_2d)->std::expected<void, RendererError>
-	{
-		commands2d_.submit(render_command_2d);
-		return std::expected<void, RendererError>(std::in_place);
-	}
+
 	auto SdlRenderer::execute(const RenderCommand2D& render_command_2d)->std::expected<void, RendererError>
 	{
 		std::visit(

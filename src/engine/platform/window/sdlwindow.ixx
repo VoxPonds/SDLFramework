@@ -22,6 +22,7 @@ export namespace engine::platform
 			~SdlWindow() = default;
 
 			WindowObPtr getWindowPtr() const;
+			SDL_Window& getWindowRef() const;
 
 			SdlWindow(const SdlWindow&) = delete;
 			SdlWindow& operator=(const SdlWindow&) = delete;
@@ -48,14 +49,19 @@ export namespace engine::platform
 		}
 	}
 
+	SdlWindow::SdlWindow(WindowPtr window_ptr) : window_ptr(std::move(window_ptr))
+	{
+		
+	}
+
 	WindowObPtr SdlWindow::getWindowPtr() const
 	{
 		return window_ptr;
 	}
 
-	SdlWindow::SdlWindow(WindowPtr window_ptr) : window_ptr(std::move(window_ptr))
+	SDL_Window& SdlWindow::getWindowRef() const
 	{
-		
+		return *window_ptr.get();
 	}
 
 	std::expected<SdlWindow, std::string> SdlWindow::create()

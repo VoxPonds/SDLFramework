@@ -26,3 +26,9 @@ target_include_directories(${TARGET_NAME}
 target_link_libraries(${TARGET_NAME}
     PRIVATE ${PROJECT_NAME}
 )
+
+add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:Example2D>/assets"
+)
