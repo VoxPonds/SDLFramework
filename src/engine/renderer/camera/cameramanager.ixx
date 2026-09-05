@@ -1,27 +1,14 @@
 module;
 #include "SDL3/SDL_rect.h"
-#include "glm/glm.hpp"
+#include "glm/vec2.hpp"
 
-export module engine.renderer.cameramanager;
+export module engine.render.cameramanager;
+import engine.render.camera;
 import std.compat;
 import engine.core.math;
 
-export namespace engine::renderer
+export namespace engine::render
 {
-	struct Camera2D {
-		core::Vector2 position{};
-		core::Vector2 viewport_size{};
-		float rotation{};
-		float zoom{ 1.0f };
-	};
-	struct Camera3D {
-		core::Vector3 position;       // Camera position
-		core::Vector3 target;         // Camera target it looks-at
-		core::Vector3 up;             // Camera up vector (rotation over its axis)
-		float fovy;             // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
-		int projection;         // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
-	};
-
     class Camera2DManager final
     {
 	    private:
@@ -60,7 +47,7 @@ export namespace engine::renderer
 	        const std::optional<SDL_Rect>& getLimitBounds() const;
 
 			Camera2DManager(const Camera2DManager&) = default;
-			Camera2DManager& operator=(const Camera2DManager&) = default;
+			Camera2DManager& operator=(const Camera2DManager&) = delete;
 			Camera2DManager(Camera2DManager&&) = default;
 			Camera2DManager& operator=(Camera2DManager&&) = delete;
     };
@@ -74,20 +61,4 @@ export namespace engine::renderer
 		camera2d_(camera_2d)
     {
     }
-	void Camera2DManager::follow(core::Vector2 target)
-	{
-		camera2d_.position = target - camera2d_.viewport_size * 0.5f;
-
-		clampPosition();
-	}
-
-	core::Vector2 Camera2DManager::worldToScreen(glm::vec2 world_pos, glm::vec2 scroll_factor) const
-	{
-		return world_pos - camera2d_.position * scroll_factor;
-	}
-
-	core::Vector2 Camera2DManager::screenToWorld(core::Vector2 screen_pos) const
-	{
-		return screen_pos + camera2d_.position;
-	}
 }

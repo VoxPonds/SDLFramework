@@ -11,19 +11,11 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
-      },
-      "architecture": {
-        "value": "unspecified",
-        "strategy": "external"
-      },
-      "toolset": {
-        "value": "unspecified",
-        "strategy": "external"
       }
     },
 
     {
-      "name": "msvc-base",
+      "name": "windows-msvc-base",
       "hidden": true,
       "inherits": "windows-base",
       "cacheVariables": {
@@ -34,14 +26,17 @@
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
           "enableMicrosoftCodeAnalysis": true,
           "codeAnalysisRuleset": "CppCoreCheckRules.ruleset"
+        },
+        "jetbrains.com/clion": {
+          "toolchain": "Visual Studio"
         }
       }
     },
 
     {
-      "name": "msvc-x64",
+      "name": "windows-msvc-x64",
       "hidden": true,
-      "inherits": "msvc-base",
+      "inherits": "windows-msvc-base",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -49,27 +44,27 @@
     },
 
     {
-      "name": "msvc-x64-debug",
-      "displayName": "MSVC x64 Debug",
-      "inherits": "msvc-x64",
+      "name": "windows-msvc-x64-debug",
+      "displayName": "Windows MSVC x64 Debug",
+      "inherits": "windows-msvc-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
     {
-      "name": "msvc-x64-release",
-      "displayName": "MSVC x64 Release",
-      "inherits": "msvc-x64",
+      "name": "windows-msvc-x64-release",
+      "displayName": "Windows MSVC x64 Release",
+      "inherits": "windows-msvc-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
 
     {
-      "name": "msvc-x86",
+      "name": "windows-msvc-x86",
       "hidden": true,
-      "inherits": "msvc-base",
+      "inherits": "windows-msvc-base",
       "architecture": {
         "value": "x86",
         "strategy": "external"
@@ -77,25 +72,25 @@
     },
 
     {
-      "name": "msvc-x86-debug",
-      "displayName": "MSVC x86 Debug",
-      "inherits": "msvc-x86",
+      "name": "windows-msvc-x86-debug",
+      "displayName": "Windows MSVC x86 Debug",
+      "inherits": "windows-msvc-x86",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
     {
-      "name": "msvc-x86-release",
-      "displayName": "MSVC x86 Release",
-      "inherits": "msvc-x86",
+      "name": "windows-msvc-x86-release",
+      "displayName": "Windows MSVC x86 Release",
+      "inherits": "windows-msvc-x86",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
 
     {
-      "name": "gcc-base",
+      "name": "windows-gcc-base",
       "hidden": true,
       "inherits": "windows-base",
       "cacheVariables": {
@@ -104,31 +99,33 @@
       },
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
-          "intelliSenseMode": "linux-gcc-x64"
+          "intelliSenseMode": "windows-gcc-x64"
+        },
+        "jetbrains.com/clion": {
+          "toolchain": "MinGW"
         }
       }
     },
 
     {
-      "name": "gcc-x64-debug",
-      "displayName": "GCC x64 Debug",
-      "inherits": "gcc-base",
+      "name": "windows-gcc-x64-debug",
+      "displayName": "Windows GCC x64 Debug",
+      "inherits": "windows-gcc-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
     {
-      "name": "gcc-x64-release",
-      "displayName": "GCC x64 Release",
-      "inherits": "gcc-base",
+      "name": "windows-gcc-x64-release",
+      "displayName": "Windows GCC x64 Release",
+      "inherits": "windows-gcc-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
-
     {
-      "name": "clang-base",
+      "name": "windows-clang-base",
       "hidden": true,
       "inherits": "windows-base",
       "cacheVariables": {
@@ -138,23 +135,26 @@
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
           "intelliSenseMode": "windows-clang-x64"
+        },
+        "jetbrains.com/clion": {
+          "toolchain": "MinGW"
         }
       }
     },
 
     {
-      "name": "clang-x64-debug",
-      "displayName": "Clang x64 Debug",
-      "inherits": "clang-base",
+      "name": "windows-clang-x64-debug",
+      "displayName": "Windows Clang x64 Debug",
+      "inherits": "windows-clang-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
     {
-      "name": "clang-x64-release",
-      "displayName": "Clang x64 Release",
-      "inherits": "clang-base",
+      "name": "windows-clang-x64-release",
+      "displayName": "Windows Clang x64 Release",
+      "inherits": "windows-clang-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -166,7 +166,6 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/linux/${presetName}",
       "installDir": "${sourceDir}/out/install/linux/${presetName}",
-      "cacheVariables": {},
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -178,6 +177,7 @@
         }
       }
     },
+
     {
       "name": "linux-debug",
       "displayName": "Linux Debug",
@@ -193,7 +193,6 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/macos/${presetName}",
       "installDir": "${sourceDir}/out/install/macos/${presetName}",
-      "cacheVariables": {},
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -205,6 +204,7 @@
         }
       }
     },
+
     {
       "name": "macos-debug",
       "displayName": "macOS Debug",
@@ -213,5 +213,6 @@
         "CMAKE_BUILD_TYPE": "Debug"
       }
     }
+
   ]
 }

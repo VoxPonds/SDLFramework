@@ -1,6 +1,7 @@
 /out/
 /.vs/
 /.vscode/
+/.idea/
 /assets/
 /src/game
 CMakeUserPresets.json

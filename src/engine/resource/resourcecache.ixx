@@ -43,14 +43,15 @@ export namespace engine::resource
 		public:
 			bool contains(const Key& key) const;
 
-			std::expected<ResourceHandle<Resource>, ResourceError> find(const Key& key)const;//find handle
+			auto find(const Key& key)const -> std::expected<ResourceHandle<Resource>, ResourceError>;//find handle
 
 			template<typename LoadFunc> requires ResourceLoader<Key, Resource, LoadFunc>
-			std::expected<ResourceHandle<Resource>, ResourceError> load(const Key& key, LoadFunc load_func);
+			auto load(const Key& key, LoadFunc load_func) -> std::expected<ResourceHandle<Resource>, ResourceError>;
 
-			std::expected<utilities::ObPtr<Resource>, ResourceError> get(ResourceHandle<Resource> handle);//get resource pointer
+			auto get(ResourceHandle<Resource> handle) -> std::expected<utilities::ObPtr<Resource>, ResourceError>;//get resource pointer
 
-			std::expected<void, ResourceError> erase(const Key& key);
+			auto erase(const Key& key) -> std::expected<void, ResourceError>;
+
 			void clear();
 	};
 
@@ -61,7 +62,7 @@ export namespace engine::resource
 	}
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
-	std::expected<ResourceHandle<Resource>, ResourceError> ResourceCache<Key, Resource>::find(const Key& key)const
+	auto ResourceCache<Key, Resource>::find(const Key& key)const -> std::expected<ResourceHandle<Resource>, ResourceError>
 	{
 		auto it = key_to_handle_.find(key);
 		if (it == key_to_handle_.end())
@@ -73,7 +74,7 @@ export namespace engine::resource
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
 	template<typename LoadFunc> requires ResourceLoader<Key,Resource,LoadFunc> 
-	std::expected<ResourceHandle<Resource>,ResourceError> ResourceCache<Key, Resource>::load(const Key& key, LoadFunc load_func)
+	auto ResourceCache<Key, Resource>::load(const Key& key, LoadFunc load_func) -> std::expected<ResourceHandle<Resource>, ResourceError>
 	{
 		if (auto result = find(key); result) return result.value();
 
@@ -101,7 +102,6 @@ export namespace engine::resource
 			const typename ResourceHandle<Resource>::GenType generation = 0;
 
 			slots_.emplace_back(std::move(resourcePtr), generation);
-			//slots_.push_back({std::move(resource),generation});
 
 			ResourceHandle<Resource> handle{ index, generation };
 
@@ -116,7 +116,7 @@ export namespace engine::resource
 	}
 
 	template <typename Key, typename Resource> requires MappingCheck<Key, Resource>
-	std::expected<utilities::ObPtr<Resource>, ResourceError> ResourceCache<Key, Resource>::get(ResourceHandle<Resource> handle)
+	auto ResourceCache<Key, Resource>::get(ResourceHandle<Resource> handle) -> std::expected<utilities::ObPtr<Resource>, ResourceError>
 	{
 		if (!handle) return std::unexpected(ResourceError::INVALID_HANDLE);
 
@@ -132,7 +132,7 @@ export namespace engine::resource
 	}
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
-	std::expected<void, ResourceError> ResourceCache<Key, Resource>::erase(const Key& key)
+	auto ResourceCache<Key, Resource>::erase(const Key& key) -> std::expected<void, ResourceError>
 	{
 		auto it = key_to_handle_.find(key);
 		if (it == key_to_handle_.end()) return std::unexpected(ResourceError::NOT_FOUND);

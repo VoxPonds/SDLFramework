@@ -31,6 +31,7 @@ export namespace engine::render
 		public:
 			Sprite() = default;
 			Sprite(resource::ImageHandle image_handle, const std::optional<ImageRect>& source_rect = std::nullopt);
+			~Sprite() = default;
 
 			[[nodiscard]]
 			resource::ImageHandle getImageHandle() const;

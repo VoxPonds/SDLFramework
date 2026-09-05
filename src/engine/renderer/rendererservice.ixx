@@ -4,6 +4,7 @@ module;
 export module engine.renderer.rendererservice;
 import engine.render.rendererbackend;
 import engine.render.sdlrenderdevice;
+import engine.render.rendertypes;
 import engine.render.sdlrenderer;
 import engine.resource.resourcemanager;
 import engine.render.framerecorder;
@@ -72,7 +73,7 @@ export namespace engine::render
 
 	std::expected<void, RendererError> RendererService::run()
 	{
-		return backend().render(recorder_.Data().command2ds_.commands());
+		return backend().render(recorder_.Data());
 	}
 
 	void RendererService::endFrame()

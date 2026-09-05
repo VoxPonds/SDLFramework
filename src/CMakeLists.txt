@@ -1,11 +1,29 @@
 add_library(${PROJECT_NAME} STATIC)
 
-file(GLOB_RECURSE MODULE_FILES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.ixx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cppm"
+target_compile_definitions(${PROJECT_NAME}
+    PUBLIC
+        GLM_FORCE_LEFT_HANDED
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
+
+target_compile_features(${PROJECT_NAME}
+        PUBLIC
+        cxx_std_23
+)
+
+set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+        CXX_MODULE_STD ON
+        CXX_STANDARD_REQUIRED ON
+)
+
+file(GLOB_RECURSE MODULE_FILES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.ixx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cppm"
+)
+
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
 target_sources(${PROJECT_NAME}
@@ -18,19 +36,7 @@ target_sources(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
-        ${PROJECT_SOURCE_DIR}/include
-)
-
-target_compile_features(${PROJECT_NAME}
-    PUBLIC
-        cxx_std_23
-
-)
-
-set_target_properties(${PROJECT_NAME}
-    PROPERTIES
-    CXX_MODULE_STD ON
-    CXX_STANDARD_REQUIRED ON
+        ${PROJECT_SOURCE_DIR}/src/engine/include
 )
 
 # Link to the actual SDL3 library.

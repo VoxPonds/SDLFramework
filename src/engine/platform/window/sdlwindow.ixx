@@ -1,7 +1,6 @@
 module;
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_video.h"
-#include "spdlog/spdlog.h"
 
 export module engine.platform.sdlwindow;
 import engine.platform.sdlptr;
@@ -44,7 +43,6 @@ export namespace engine::platform
 		{
 			SDL_Log("Couldn't create window: %s", SDL_GetError());
 			auto error = std::string("Failed to create SDL window: ") + SDL_GetError();
-			spdlog::error(error);
 			throw std::runtime_error(SDL_GetError());
 		}
 	}
@@ -72,7 +70,6 @@ export namespace engine::platform
 		if (!ptr)
 		{
 			//SDL_Log("Couldn't create window: %s", SDL_GetError());
-			spdlog::error("Failed to create SDL window");
 			return std::unexpected<std::string>("Failed to create SDL window");
 		}
 

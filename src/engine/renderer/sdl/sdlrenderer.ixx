@@ -15,9 +15,12 @@ import engine.render.framedata;
 import engine.render.sdlrenderdevice;
 import engine.render.sdlrendereradapter;
 import engine.render.texturemanager;
+import engine.render.camera;
 import engine.resource.resourcemanager;
+import engine.resource.resourceptr;
 import engine.core.math;
 import engine.utilities;
+import std;
 
 
 export namespace engine::render
@@ -36,15 +39,13 @@ export namespace engine::render
 
 			SdlRenderer(const SdlRenderer&) = delete;
 			SdlRenderer& operator=(const SdlRenderer&) = delete;
-			SdlRenderer(SdlRenderer&&) = default;
-			SdlRenderer& operator=(SdlRenderer&&) = default;
+			SdlRenderer(SdlRenderer&&) = delete;
+			SdlRenderer& operator=(SdlRenderer&&) = delete;
 
 			void renderTest()const;
-			auto render(const std::span<const RenderCommand2D>& commands)-> std::expected<void, RendererError>override;
-			void drawTexture(
-				const Camera2DManager& camera_manager, const Sprite& sprite, const core::Vector2& position,
-				const core::Vector2& scale = { 1.0f, 1.0f }, double angle = 0.0f, SDL_FlipMode flip_mode = SDL_FlipMode::SDL_FLIP_NONE
-			)const;
+			auto render(const FrameData& data)-> std::expected<void, RendererError>override;
+
+			void drawTexture(const Camera2D& camera, const SpriteRenderCommand& command);
 			void drawTexture(const SpriteRenderCommand& command);
 
 			platform::SdlRendererDeviceObPtr getRendererPtr()const;
@@ -52,7 +53,7 @@ export namespace engine::render
 			//std::expected<void, RendererError> submit(const RenderCommand2D& render_command_2d) override;
 			void beginFrame() override;
 			void clear() override;
-			std::expected<void, RendererError> execute(const RenderCommand2D& render_command_2d)override;
+			auto execute(const Camera& camera, const RenderCommand2D& render_command_2d) -> std::expected<void, RendererError> override;
 			void present() override;
 			void endFrame() override;
 			
@@ -90,15 +91,17 @@ export namespace engine::render
 		SDL_RenderPresent(renderer_ptr.get());
 	}
 
-	auto SdlRenderer::render(const std::span<const RenderCommand2D>& commands)->std::expected<void, RendererError>
+	auto SdlRenderer::render(const FrameData& data)->std::expected<void, RendererError>
 	{
 		auto t0 = std::chrono::steady_clock::now();
+		auto commands = data.command2ds_.commands();
+		auto camera = data.camera;
 		beginFrame();
 		clear();
 		for (const auto& command : commands)
 		{
 			
-			auto state = execute(command);
+			auto state = execute(camera, command);
 			
 			if (!state)
 			{
@@ -120,18 +123,99 @@ export namespace engine::render
 		return {};
 	}
 
-	void SdlRenderer::drawTexture(
-		const Camera2DManager& camera_manager, const Sprite& sprite, const core::Vector2& position,
-		const core::Vector2& scale, double angle, SDL_FlipMode flip_mode
-	)const
+	void SdlRenderer::drawTexture(const Camera2D& camera, const SpriteRenderCommand& command)
 	{
-		auto screen_position = camera_manager.worldToScreen(position);
+		auto image_handle = command.sprite.getImageHandle();
+		auto image = resource_manager_borrowed.getImage(image_handle);
 
-		// acquire SDL_Texture
-		// compute rectangle and call SDL_RenderTextureRotated()s
-		SDL_RenderTextureRotated(renderer_ptr.get(), resource::SdlTexturePtr{}.get(),
-			nullptr, nullptr, angle, nullptr, flip_mode
-		);
+		auto texture_result = texture_manager.findTexture(image_handle);
+		if (!texture_result)
+		{
+			std::println("HandleError:{}",static_cast<int>(texture_result.error()));
+			texture_manager.loadTexture(image_handle);
+			return;
+		}
+
+		auto texture = texture_manager.getTexture(texture_result.value());
+
+		if (!texture)
+		{
+			std::println("RendererError:{}", static_cast<int>(texture.error()));
+			return;
+		}
+
+		const auto source_rect = command.sprite.getSourceRect();
+		const auto texture_size = resource_manager_borrowed.getImageSize(image.value().get());
+
+		utilities::ObPtr<SDL_FRect> src_rect;
+
+		if (source_rect)
+		{
+			SDL_FRect temp_rect{
+				.x = static_cast<float>(source_rect->position.x),
+				.y = static_cast<float>(source_rect->position.y),
+				.w = static_cast<float>(source_rect->size.x),
+				.h = static_cast<float>(source_rect->size.y)
+			};
+
+			src_rect = &temp_rect;
+		}
+		else
+		{
+			src_rect = nullptr;
+		}
+
+		const core::Vector2 source_size =
+			source_rect
+			? core::Vector2{
+					source_rect->size.x,
+					source_rect->size.y
+				}
+			: texture_size.value();
+
+		const auto screen_position = camera.worldToScreen(command.transform_2d.position);
+		/*std::println(
+			"world=({}, {}) camera=({}, {}) screen=({}, {})",
+			command.transform_2d.position.x,
+			command.transform_2d.position.y,
+			camera.position.x,
+			camera.position.y,
+			screen_position.x,
+			screen_position.y
+		);*/
+
+		SDL_FRect temp_rect{
+			.x = static_cast<float>(screen_position.x),
+			.y = static_cast<float>(screen_position.y),
+			.w = static_cast<float>(
+				source_size.x * command.transform_2d.scale.x
+			),
+			.h = static_cast<float>(
+				source_size.y * command.transform_2d.scale.y
+			)
+		};
+
+		utilities::ObPtr dst_rect = &temp_rect;
+
+		const auto flip_mode = static_cast<SDL_FlipMode>(command.flip_mode);
+
+		if (!SDL_RenderTextureRotated
+			(
+				renderer_ptr.get(),
+				texture.value().get(),
+				src_rect.get(),
+				dst_rect.get(),
+				command.transform_2d.rotation,
+				nullptr,
+				flip_mode
+			)
+		)
+		{
+			std::println(
+				"SDL_RenderTextureRotated failed: {}",
+				SDL_GetError()
+			);
+		}
 	}
 
 	void SdlRenderer::drawTexture(const SpriteRenderCommand& command)
@@ -230,17 +314,20 @@ export namespace engine::render
 		SDL_RenderClear(renderer_ptr.get());
 	}
 
-	auto SdlRenderer::execute(const RenderCommand2D& render_command_2d)->std::expected<void, RendererError>
+	auto SdlRenderer::execute(const Camera& camera, const RenderCommand2D& render_command_2d) -> std::expected<void, RendererError>
 	{
 		std::visit(
-		[this]<typename T>(T && command)
+		[&]<typename T1, typename T2>(T1&& camera_, T2&& command_)
 			{
-				if constexpr (std::is_same_v<std::remove_cvref_t<T>, SpriteRenderCommand>)
+				if constexpr (
+					std::is_same_v<std::remove_cvref_t<T1>, Camera2D> &&
+					std::is_same_v<std::remove_cvref_t<T2>, SpriteRenderCommand>
+				)
 				{
-					drawTexture(command);
+					drawTexture(camera_, command_);
 				}
 			},
-			render_command_2d
+			camera, render_command_2d
 		);
 		return std::expected<void, RendererError>(std::in_place);
 	}

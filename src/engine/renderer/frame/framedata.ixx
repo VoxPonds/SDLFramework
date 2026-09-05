@@ -1,11 +1,12 @@
 module;
-#include <variant>
 
 export module engine.render.framedata;
 import engine.render.sprite;
 import engine.render.rendercommandqueue;
+import engine.render.camera;
+import engine.render.rendertypes;
 import engine.core.math;
-
+import std;
 
 export namespace engine::render
 {
@@ -14,6 +15,7 @@ export namespace engine::render
         const Sprite sprite;
         core::Transform2D transform_2d;
         FlipMode flip_mode;
+        ERenderPass pass{ERenderPass::SPRITE_WORLD};
     };
 
     struct MeshRenderCommand
@@ -26,6 +28,7 @@ export namespace engine::render
 	    std::monostate
     >;
 
+
     using RenderCommand3D = std::variant <
         MeshRenderCommand,
         std::monostate
@@ -33,6 +36,7 @@ export namespace engine::render
 
     struct FrameData
     {
+        std::variant<Camera2D, Camera3D> camera;
         RenderCommandQueue<RenderCommand2D> command2ds_;
         RenderCommandQueue<RenderCommand3D> command3ds_;
 

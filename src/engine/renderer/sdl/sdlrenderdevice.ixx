@@ -1,10 +1,11 @@
 module;
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_render.h"
-#include "spdlog/spdlog.h"
 
 export module engine.render.sdlrenderdevice;
 import engine.platform.sdlptr;
+import engine.render.rendertypes;
+import std;
 
 export namespace engine::render
 {
@@ -12,11 +13,14 @@ export namespace engine::render
     {
 	    private:
 	        platform::SdlRendererDevicePtr renderer_ptr;
+    		RenderCapabilities capabilities_;
 
 	    public:
 	        explicit SdlRenderDevice(platform::WindowObPtr window_borrowed);
 
 	        platform::SdlRendererDeviceObPtr getRendererPtr() const;
+
+	        static RenderCapabilities capabilities();
     };
 
     SdlRenderDevice::SdlRenderDevice(platform::WindowObPtr window_borrowed)
@@ -28,7 +32,6 @@ export namespace engine::render
 		if (!renderer_ptr)
 		{
 			auto error = std::string("Failed to create SDL renderer: ") + SDL_GetError();
-			spdlog::error(error);
 			throw std::runtime_error(SDL_GetError());
 		}
     }
@@ -36,5 +39,16 @@ export namespace engine::render
     platform::SdlRendererDeviceObPtr SdlRenderDevice::getRendererPtr() const
     {
 		return renderer_ptr;
+    }
+
+    RenderCapabilities SdlRenderDevice::capabilities()
+    {
+    	return RenderCapabilities{
+    		.supports_3d = false,
+    		.supports_compute = false,
+    		.supports_msaa = false,
+    		.supports_bindless = false,
+    		.supports_texture_compression = false,
+    	};
     }
 }

@@ -10,10 +10,8 @@ export import :inputcontext;
 export namespace engine::platform
 {
     struct InputConfig {
-
         std::array<InputMappingContext, static_cast<uint8_t>(ContextType::CONTEXT_COUNT)> input_contexts_;
         InputMappingContext gameplay_standard_context_;
-
     };
 
     struct InputSystem 
@@ -26,6 +24,11 @@ export namespace engine::platform
 			std::span<const bool> keyboard_state_{};
 	        int keyboard_count_{};
 
+	        static bool isValidScancode(SDL_Scancode key)
+	        {
+    			return key >= 0 && static_cast<size_t>(key) < SDL_SCANCODE_COUNT;
+    		}
+
 		public:
 	        InputConfig input_config_;
 	        std::unordered_map<StandardAction, ActionProfile>& action_mapping_ = input_config_.gameplay_standard_context_.actionMapping;
@@ -36,7 +39,7 @@ export namespace engine::platform
 
 	        void processEvent(const SDL_Event& event);
 
-	        bool getActionEvent(StandardAction action) const;
+	        bool getActionEvent(StandardAction action)const;
 
 	        bool checkKeyDown(SDL_Scancode key) const;
 
@@ -44,11 +47,12 @@ export namespace engine::platform
 
 	        bool checkKeyReleased(SDL_Scancode key)const;
 
-	        bool chordPatternMatch(ChordInputMapping& pattern) const;
+	        bool chordPatternMatch(ChordInputMapping& pattern)const;
 
 	        bool checkKeyPressedRepeat(SDL_Scancode key) const;
 
 	        bool checkTrigger(SDL_Scancode key) const;
+
     };
 
     void InputSystem::beginFrame()
@@ -87,12 +91,13 @@ export namespace engine::platform
 	    }
     }
 
-    bool InputSystem::getActionEvent(StandardAction action) const
+    bool InputSystem::getActionEvent(StandardAction action)const
     {
-	    bool result = false;
+	   // std::vector<ChordInputMapping>& action_chord_lists_ = this->action_mapping_[action].mapping_lists_;
+    	auto it = action_mapping_.find(action);
+    	if (it == action_mapping_.end())return false;
 
-	    std::vector<ChordInputMapping>& action_chord_lists_ = this->action_mapping_[action].mapping_lists_;
-
+    	auto& action_chord_lists_ = it->second.mapping_lists_;
 	    for (auto& chord_bind_ : action_chord_lists_)
 	    //for(const auto& firstMatch : chordbind.input_sequence_)
 	    {
@@ -128,15 +133,16 @@ export namespace engine::platform
 				    }
 			    default:
 				    {
-					    result = false;
+					    return false;
 				    }
 		    }
 	    }
-	    return result;
+	    return false;
     }
 
     bool InputSystem::checkKeyDown(SDL_Scancode key) const
     {
+    	if (!InputSystem::isValidScancode(key)) return false;
 		return keyboard_state_[key];
     }
 
@@ -150,7 +156,7 @@ export namespace engine::platform
 		return released_keys_.test(key);
     }
 
-    bool InputSystem::chordPatternMatch(ChordInputMapping& pattern) const
+    bool InputSystem::chordPatternMatch(ChordInputMapping& pattern)const
     {
 	    if (pattern.input_sequence_.empty()) return false;
 

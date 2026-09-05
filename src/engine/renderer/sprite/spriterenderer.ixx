@@ -1,6 +1,6 @@
 module;
 
-export module engine.render.spriterenderer;
+export module engine.render.apprenderer:spriterenderer;
 
 import engine.resource.resourcemanager;
 import engine.render.rendererbackend;
@@ -20,7 +20,7 @@ export namespace engine::render
 			utilities::ObPtr<FrameRecorder> recorder_borrowed;
 
 	    public:
-	        SpriteRenderer(utilities::ObPtr<FrameRecorder> recorder);
+	        SpriteRenderer(FrameRecorder& recorder);
 
 			SpriteRenderer(const SpriteRenderer&) = delete;
 			SpriteRenderer& operator=(const SpriteRenderer&) = delete;
@@ -30,14 +30,14 @@ export namespace engine::render
 			std::expected<void, RendererError> drawSprite(
 				const Sprite& sprite, const core::Transform2D& transform,
 				FlipMode flip_mode
-			);
+			)const;
 			std::expected<void, RendererError> drawSprite(
 				const Sprite& sprite, const core::Vector2& position,
-				const core::Vector2& scale, double rotation, FlipMode flip_mode
-			);
+				const core::Vector2& scale, float rotation, FlipMode flip_mode
+			)const;
     };
 
-    SpriteRenderer::SpriteRenderer(utilities::ObPtr<FrameRecorder> recorder)
+    SpriteRenderer::SpriteRenderer(FrameRecorder& recorder)
 		: recorder_borrowed(recorder)
     {
     }
@@ -46,7 +46,7 @@ export namespace engine::render
     	const Sprite& sprite,
 	    const core::Transform2D& transform, 
 	    FlipMode flip_mode
-	) 
+	)const 
     {
 		recorder_borrowed->record(
 			SpriteRenderCommand{
@@ -60,16 +60,16 @@ export namespace engine::render
 
 	std::expected<void, RendererError> SpriteRenderer::drawSprite(
 		const Sprite& sprite, const core::Vector2& position,
-		const core::Vector2& scale, double rotation, FlipMode flip_mode
-    )
+		const core::Vector2& scale, float rotation, FlipMode flip_mode
+    )const
 	{
 		recorder_borrowed->record(
 			SpriteRenderCommand{
 				.sprite = sprite,
 				.transform_2d = core::Transform2D{
 					.position = position,
-					.scale = scale,
-					.rotation = rotation
+					.rotation = rotation,
+					.scale = scale
 				},
 				.flip_mode = flip_mode
 			}
