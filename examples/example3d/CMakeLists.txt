@@ -1,4 +1,4 @@
-set(TARGET_NAME Example2D)
+set(TARGET_NAME Example3D)
 
 add_executable(${TARGET_NAME})
 
@@ -23,24 +23,24 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 )
 
 target_sources(${TARGET_NAME}
-    PRIVATE
+        PRIVATE
         ${SRC_FILES}
-    PRIVATE
+        PRIVATE
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
-            ${MODULE_FILES}
+        ${MODULE_FILES}
 )
 
 target_include_directories(${TARGET_NAME}
-    PRIVATE
+        PRIVATE
         ${PROJECT_SOURCE_DIR}/include
 )
 
 target_link_libraries(${TARGET_NAME}
-    PRIVATE ${PROJECT_NAME}
+        PRIVATE ${PROJECT_NAME}
 )
 
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/assets"
-        "$<TARGET_FILE_DIR:Example2D>/assets"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/examples/example3d/shaders"
+        "$<TARGET_FILE_DIR:Example3D>/shaders"
 )

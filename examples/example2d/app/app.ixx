@@ -37,7 +37,7 @@ export
 			auto draw() -> std::expected<void, engine::render::RendererError>;
 
 		private:
-			std::expected<engine::resource::ImageHandle, engine::resource::ResourceError> loadResource();
+			std::expected<engine::resource::ImageHandle, engine::resource::EResourceError> loadResource();
 	};
 
 	GameApp::GameApp(
@@ -70,7 +70,7 @@ export
 		return app_renderer_.drawSprite(sprite_, transform_, engine::render::FlipMode::FLIP_NONE);
 	}
 
-	auto GameApp::loadResource()->std::expected<engine::resource::ImageHandle, engine::resource::ResourceError>
+	auto GameApp::loadResource()->std::expected<engine::resource::ImageHandle, engine::resource::EResourceError>
 	{
 		auto result =
 			resource_manager_borrowed_->loadImage({
@@ -81,6 +81,6 @@ export
 			return std::unexpected(result.error());
 		}
 		sprite_.setImageHandle(result.value());
-		return std::expected<engine::resource::ImageHandle, engine::resource::ResourceError>(std::in_place);
+		return std::expected<engine::resource::ImageHandle, engine::resource::EResourceError>(std::in_place);
 	}
 }

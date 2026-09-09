@@ -43,14 +43,14 @@ export namespace engine::resource
 		public:
 			bool contains(const Key& key) const;
 
-			auto find(const Key& key)const -> std::expected<ResourceHandle<Resource>, ResourceError>;//find handle
+			auto find(const Key& key)const -> std::expected<ResourceHandle<Resource>, EResourceError>;//find handle
 
 			template<typename LoadFunc> requires ResourceLoader<Key, Resource, LoadFunc>
-			auto load(const Key& key, LoadFunc load_func) -> std::expected<ResourceHandle<Resource>, ResourceError>;
+			auto load(const Key& key, LoadFunc load_func) -> std::expected<ResourceHandle<Resource>, EResourceError>;
 
-			auto get(ResourceHandle<Resource> handle) -> std::expected<utilities::ObPtr<Resource>, ResourceError>;//get resource pointer
+			auto get(ResourceHandle<Resource> handle) -> std::expected<utilities::ObPtr<Resource>, EResourceError>;//get resource pointer
 
-			auto erase(const Key& key) -> std::expected<void, ResourceError>;
+			auto erase(const Key& key) -> std::expected<void, EResourceError>;
 
 			void clear();
 	};
@@ -62,24 +62,24 @@ export namespace engine::resource
 	}
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
-	auto ResourceCache<Key, Resource>::find(const Key& key)const -> std::expected<ResourceHandle<Resource>, ResourceError>
+	auto ResourceCache<Key, Resource>::find(const Key& key)const -> std::expected<ResourceHandle<Resource>, EResourceError>
 	{
 		auto it = key_to_handle_.find(key);
 		if (it == key_to_handle_.end())
 		{
-			return std::unexpected(ResourceError::NOT_FOUND);
+			return std::unexpected(EResourceError::NOT_FOUND);
 		}
 		return it->second;
 	}
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
 	template<typename LoadFunc> requires ResourceLoader<Key,Resource,LoadFunc> 
-	auto ResourceCache<Key, Resource>::load(const Key& key, LoadFunc load_func) -> std::expected<ResourceHandle<Resource>, ResourceError>
+	auto ResourceCache<Key, Resource>::load(const Key& key, LoadFunc load_func) -> std::expected<ResourceHandle<Resource>, EResourceError>
 	{
 		if (auto result = find(key); result) return result.value();
 
 		auto resourcePtr = load_func(key);
-		if (!resourcePtr) return std::unexpected(ResourceError::LOAD_FAILED);
+		if (!resourcePtr) return std::unexpected(EResourceError::LOAD_FAILED);
 
 		if (!free_slots_.empty())
 		{
@@ -116,26 +116,26 @@ export namespace engine::resource
 	}
 
 	template <typename Key, typename Resource> requires MappingCheck<Key, Resource>
-	auto ResourceCache<Key, Resource>::get(ResourceHandle<Resource> handle) -> std::expected<utilities::ObPtr<Resource>, ResourceError>
+	auto ResourceCache<Key, Resource>::get(ResourceHandle<Resource> handle) -> std::expected<utilities::ObPtr<Resource>, EResourceError>
 	{
-		if (!handle) return std::unexpected(ResourceError::INVALID_HANDLE);
+		if (!handle) return std::unexpected(EResourceError::INVALID_HANDLE);
 
 		const auto index = handle.getId();
 
-		if (index >= slots_.size()) return std::unexpected(ResourceError::INDEX_OUT_OF_RANGE);
+		if (index >= slots_.size()) return std::unexpected(EResourceError::INDEX_OUT_OF_RANGE);
 
 		auto& slot = slots_[index];
 
-		if (slot.generation != handle.getGeneration()) return std::unexpected(ResourceError::STALE_HANDLE);
+		if (slot.generation != handle.getGeneration()) return std::unexpected(EResourceError::STALE_HANDLE);
 
 		return slot.resource_ptr.get();
 	}
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
-	auto ResourceCache<Key, Resource>::erase(const Key& key) -> std::expected<void, ResourceError>
+	auto ResourceCache<Key, Resource>::erase(const Key& key) -> std::expected<void, EResourceError>
 	{
 		auto it = key_to_handle_.find(key);
-		if (it == key_to_handle_.end()) return std::unexpected(ResourceError::NOT_FOUND);
+		if (it == key_to_handle_.end()) return std::unexpected(EResourceError::NOT_FOUND);
 
 		const auto handle = it->second;
 		const auto id = handle.getId();

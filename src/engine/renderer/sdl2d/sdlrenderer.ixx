@@ -22,10 +22,9 @@ import engine.core.math;
 import engine.utilities;
 import std;
 
-
 export namespace engine::render
 {
-	class SdlRenderer : public IRendererBackend
+	class SdlRenderer
 	{
 		private:
 			//using SdlRendererDevicePtr = std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)>;
@@ -35,7 +34,7 @@ export namespace engine::render
 
 		public:
 			SdlRenderer(platform::SdlRendererDeviceObPtr renderer, resource::ResourceManager& manager);
-			~SdlRenderer()override = default;
+			~SdlRenderer() = default;
 
 			SdlRenderer(const SdlRenderer&) = delete;
 			SdlRenderer& operator=(const SdlRenderer&) = delete;
@@ -43,7 +42,7 @@ export namespace engine::render
 			SdlRenderer& operator=(SdlRenderer&&) = delete;
 
 			void renderTest()const;
-			auto render(const FrameData& data)-> std::expected<void, RendererError>override;
+			auto render(const FrameData& data)-> std::expected<void, RendererError>;
 
 			void drawTexture(const Camera2D& camera, const SpriteRenderCommand& command);
 			void drawTexture(const SpriteRenderCommand& command);
@@ -51,11 +50,11 @@ export namespace engine::render
 			platform::SdlRendererDeviceObPtr getRendererPtr()const;
 
 			//std::expected<void, RendererError> submit(const RenderCommand2D& render_command_2d) override;
-			void beginFrame() override;
-			void clear() override;
-			auto execute(const Camera& camera, const RenderCommand2D& render_command_2d) -> std::expected<void, RendererError> override;
-			void present() override;
-			void endFrame() override;
+			void beginFrame();
+			void clear();
+			auto execute(const Camera& camera, const RenderCommand2D& render_command_2d) -> std::expected<void, RendererError>;
+			void present();
+			void endFrame();
 			
 	};
 
@@ -95,7 +94,7 @@ export namespace engine::render
 	{
 		auto t0 = std::chrono::steady_clock::now();
 		auto commands = data.command2ds_.commands();
-		auto camera = data.camera;
+		auto& camera = data.camera;
 		beginFrame();
 		clear();
 		for (const auto& command : commands)
@@ -132,7 +131,7 @@ export namespace engine::render
 		if (!texture_result)
 		{
 			std::println("HandleError:{}",static_cast<int>(texture_result.error()));
-			texture_manager.loadTexture(image_handle);
+			if (const auto load_result = texture_manager.loadTexture(image_handle); !load_result) {}
 			return;
 		}
 
@@ -226,8 +225,8 @@ export namespace engine::render
 		if (!texture_result)
 		{
 			std::println("HandleError:{}", static_cast<int>(texture_result.error()));
-			texture_manager.loadTexture(image_handle);
-			return;
+			if (const auto load_result = texture_manager.loadTexture(image_handle); !load_result)
+				return;
 		}
 		auto texture = texture_manager.getTexture(texture_result.value());
 

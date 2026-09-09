@@ -13,6 +13,7 @@ import engine.renderer.rendererservice;
 import engine.render.rendererbackend;
 import engine.resource.resourcemanager;
 import engine.render.framerecorder;
+import engine.render.rendertypes;
 import engine.utilities;
 import std;
 
@@ -32,7 +33,6 @@ export namespace engine::core
 			platform::SdlWindow window_manager_;
 			resource::ResourceManager resource_manager_;
 			render::RendererService renderer_service_;
-			Timer timer_;
 			EventDispatcher dispatcher_;
 			App app_;
 			bool running_;
@@ -61,7 +61,6 @@ export namespace engine::core
 			
 			const resource::ResourceManager& ResourceManager()const;
 			const render::RendererService& RendererService()const;
-			const Timer& Timer()const;
 			std::expected<void, render::RendererError> run();
 	};
 
@@ -70,10 +69,10 @@ export namespace engine::core
 		window_manager_{},
 		resource_manager_{},
 		renderer_service_(render::ERenderBackend::SDL_RENDERER, window_manager_.getWindowRef(), resource_manager_),
-		timer_{},
 		app_(resource_manager_, renderer_service_.frameRecorder()),
 		running_(true)
 	{
+		Timer::init();
 	}
 
 	template<typename App> requires AppFunc<App>
@@ -85,9 +84,12 @@ export namespace engine::core
 	template<typename App> requires AppFunc<App>
 	std::expected<void, render::RendererError> Runtime<App>::run()
 	{
+		Timer::beginFrame();
 		renderer_service_.beginFrame();
 		processEvent();
 		iterate();
+		renderer_service_.endFrame();
+		Timer::endFrame();
 		return{};
 	}
 
@@ -104,12 +106,6 @@ export namespace engine::core
 	}
 
 	template<typename App> requires AppFunc<App>
-	const Timer & Runtime<App>::Timer()const
-	{
-		return timer_;
-	}
-
-	template<typename App> requires AppFunc<App>
 	void Runtime<App>::init()
 	{
 		app_.init();
@@ -118,7 +114,7 @@ export namespace engine::core
 	template<typename App> requires AppFunc<App>
 	void Runtime<App>::beginFrame()
 	{
-		timer_.beginFrame();
+		Timer::beginFrame();
 		renderer_service_.beginFrame();
 	}
 
@@ -126,7 +122,7 @@ export namespace engine::core
 	void Runtime<App>::iterate()
 	{
 		app_.update();
-		app_.draw();
+		if (auto result = app_.draw(); !result) return;
 		if (!renderer_service_.run()) return;
 	}
 
@@ -167,7 +163,7 @@ export namespace engine::core
 	void Runtime<App>::endFrame()
 	{
 		renderer_service_.endFrame();
-		timer_.endFrame();
+		Timer::endFrame();
 	}
 
 	template<typename App> requires AppFunc<App>

@@ -5,6 +5,7 @@
     #endif
     #ifdef FROTH_MANUAL_FRAMEWORK_MODE
         #include <SDL3/SDL_main.h>
+        #include <SDL3/SDL.h>
     #endif
     #ifdef FROTH_DELEGATE_FRAMEWORK_MODE
         #define SDL_MAIN_USE_CALLBACKS

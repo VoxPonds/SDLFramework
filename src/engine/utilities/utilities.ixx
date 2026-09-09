@@ -67,6 +67,37 @@ export namespace engine::utilities
 				return ptr_ != nullptr;
 			}
 	};
+	template <typename T>
+	struct Borrowed
+	{
+		private:
+			T* ptr_ = nullptr;
+
+		public:
+			explicit Borrowed(T& ref) noexcept : ptr_(&ref) {}
+			explicit Borrowed(T&&) = delete;
+			explicit Borrowed(std::nullptr_t) = delete;
+			explicit Borrowed(T* ptr) noexcept : ptr_(ptr)
+			{
+				assert(ptr != nullptr && "Borrowed<T> requires a non-null pointer");
+			}
+			Borrowed(const Borrowed&) = default;
+			Borrowed& operator=(const Borrowed&) = default;
+			Borrowed(Borrowed&&) = default;
+			Borrowed& operator=(Borrowed&&) = default;
+			~Borrowed() = default;
+			T& get() const noexcept { return *ptr_; }
+			T* operator->() const noexcept { return ptr_; }
+			T& operator*() const noexcept { return *ptr_; }
+		};
+
+	template<typename T>
+	Borrowed<T> borrow(T& ref) noexcept
+	{
+		return Borrowed<T>(ref);
+	}
+	template<typename T>
+	Borrowed(T& ref) -> Borrowed<T>;
 
 	template<typename T, typename D>
 	ObserverPtr(std::unique_ptr<T, D>) -> ObserverPtr<T>;

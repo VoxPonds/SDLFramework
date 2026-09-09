@@ -1,5 +1,4 @@
 module;
-#include "glm/glm.hpp"
 
 export module engine.render.rendererbackend;
 import engine.render.sprite;
@@ -13,12 +12,32 @@ import std;
 
 export namespace engine::render
 {
+    template<typename Derived>
+    class RendererBackend
+    {
+        protected:
+            Derived& derived()
+            {
+                return static_cast<Derived&>(*this);
+            }
+        public:
+            std::expected<void, RendererError> render(const FrameData& data)
+            {
+                auto& self = derived();
+
+                self.beginFrame();
+                self.clear();
+                self.execute(data);
+                self.present();
+                self.endFrame();
+                return {};
+            }
+    };
+
     class IRendererBackend
     {
 	    public:
 	        virtual ~IRendererBackend() = default;
-            virtual std::expected<void, RendererError> render(const std::span<const RenderCommand2D>& commands);
-            virtual std::expected<void, RendererError> render(const std::span<const RenderCommand3D>& commands);
             virtual std::expected<void, RendererError> render(const FrameData& data) = 0;
 
 	        virtual void beginFrame() = 0;
@@ -32,15 +51,6 @@ export namespace engine::render
             virtual void endFrame() = 0;
     };
 
-    std::expected<void, RendererError> IRendererBackend::render(const std::span<const RenderCommand2D>& commands)
-    {
-        return std::unexpected(RendererError::UNSUPPORTED_COMMAND);
-    }
-
-    std::expected<void, RendererError> IRendererBackend::render(const std::span<const RenderCommand3D>& commands)
-    {
-        return std::unexpected(RendererError::UNSUPPORTED_COMMAND);
-    }
 
     std::expected<void, RendererError> IRendererBackend::execute(const RenderCommand3D& render_command_3d)
     {

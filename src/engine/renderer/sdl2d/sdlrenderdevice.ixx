@@ -1,6 +1,6 @@
 module;
-#include "SDL3/SDL_error.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_video.h"
 
 export module engine.render.sdlrenderdevice;
 import engine.platform.sdlptr;
@@ -16,22 +16,23 @@ export namespace engine::render
     		RenderCapabilities capabilities_;
 
 	    public:
-	        explicit SdlRenderDevice(platform::WindowObPtr window_borrowed);
+	        explicit SdlRenderDevice(SDL_Window& window_borrowed);
+    		~SdlRenderDevice() = default;
 
 	        platform::SdlRendererDeviceObPtr getRendererPtr() const;
 
-	        static RenderCapabilities capabilities();
+	        static RenderCapabilities getCapabilities();
     };
 
-    SdlRenderDevice::SdlRenderDevice(platform::WindowObPtr window_borrowed)
+    SdlRenderDevice::SdlRenderDevice(SDL_Window& window_borrowed)
 	    : renderer_ptr(
-	    	SDL_CreateRenderer(window_borrowed.get(), nullptr)
+	    	SDL_CreateRenderer(&window_borrowed, nullptr)
 	    )
     {
 		//renderer_ptr = SdlRendererDevicePtr(SDL_CreateRenderer(&sdlwindow.getWindow(), nullptr), SDL_DestroyRenderer);
 		if (!renderer_ptr)
 		{
-			auto error = std::string("Failed to create SDL renderer: ") + SDL_GetError();
+			const auto error = std::string("Failed to create SDL renderer: ") + SDL_GetError();
 			throw std::runtime_error(SDL_GetError());
 		}
     }
@@ -41,7 +42,7 @@ export namespace engine::render
 		return renderer_ptr;
     }
 
-    RenderCapabilities SdlRenderDevice::capabilities()
+    RenderCapabilities SdlRenderDevice::getCapabilities()
     {
     	return RenderCapabilities{
     		.supports_3d = false,

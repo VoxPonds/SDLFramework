@@ -22,6 +22,12 @@ export namespace engine::platform
 		static constexpr auto destroy_func = SDL_DestroyRenderer;
 	};
 
+	template<>
+	struct SdlDeleterTraits<SDL_GPUDevice>
+	{
+		static constexpr auto destroy_func = SDL_DestroyGPUDevice;
+	};
+
 	template<typename T>
 	struct SdlDeleter
 	{
@@ -44,12 +50,14 @@ export namespace engine::platform
 	template<typename T>
 	using SdlPtr = std::unique_ptr<T, SdlDeleter<T>>;
 
-	
 	using SdlRendererDevicePtr = SdlPtr<SDL_Renderer>;
 	using SdlRendererDeviceObPtr = utilities::ObPtr<SDL_Renderer>;
 
 	using WindowPtr = SdlPtr<SDL_Window>;
 	using WindowObPtr = utilities::ObPtr<SDL_Window>;
+
+	using SdlGpuDevicePtr = SdlPtr<SDL_GPUDevice>;
+	using SdlGpuDeviceObPtr = utilities::ObPtr<SDL_GPUDevice>;
 
 
 }

@@ -30,16 +30,16 @@ export namespace engine::resource
 			ImageManager(ImageManager&&) = delete;
 			ImageManager& operator=(ImageManager&&) = delete;
 			
-			std::expected<core::Vector2, ResourceError>  getImageSize(const ImageKey& key);
-			std::expected<core::Vector2, ResourceError>  getImageSize(ImageObPtr texture_ptr) const;
-			std::expected<ImageHandle, ResourceError> findImage(const ImageKey& key) const;
-			std::expected<ImageHandle, ResourceError> loadImage(const ImageKey& key);
-			std::expected<ImageObPtr, ResourceError> getImage(ImageHandle handle);
-			std::expected<void, ResourceError> unloadImage(const ImageKey& key);
+			std::expected<core::Vector2, EResourceError>  getImageSize(const ImageKey& key);
+			std::expected<core::Vector2, EResourceError>  getImageSize(ImageObPtr texture_ptr) const;
+			std::expected<ImageHandle, EResourceError> findImage(const ImageKey& key) const;
+			std::expected<ImageHandle, EResourceError> loadImage(const ImageKey& key);
+			std::expected<ImageObPtr, EResourceError> getImage(ImageHandle handle);
+			std::expected<void, EResourceError> unloadImage(const ImageKey& key);
 			void clearImages();                                       
 	};
 
-	std::expected<core::Vector2, ResourceError> ImageManager::getImageSize(const ImageKey& key)
+	std::expected<core::Vector2, EResourceError> ImageManager::getImageSize(const ImageKey& key)
 	{
 		if (auto handle = findImage(key))
 		{
@@ -58,37 +58,39 @@ export namespace engine::resource
 		}
 	}
 
-	std::expected<core::Vector2, ResourceError> ImageManager::getImageSize(ImageObPtr texture_ptr) const
+	std::expected<core::Vector2, EResourceError> ImageManager::getImageSize(ImageObPtr texture_ptr) const
 	{
-		if (!texture_ptr) return std::unexpected(ResourceError::NULL_PTR);
+		if (!texture_ptr) return std::unexpected(EResourceError::NULL_PTR);
 
 		return adapter::getImageSize(texture_ptr.get());
 	}
 
-	std::expected<ImageHandle, ResourceError> ImageManager::findImage(const ImageKey& key)const
+	std::expected<ImageHandle, EResourceError> ImageManager::findImage(const ImageKey& key)const
 	{
 		auto resource = resource_cache_.find(key);
 		return resource;
 	}
 
-	std::expected<ImageHandle, ResourceError> ImageManager::loadImage(const ImageKey& key)
+	std::expected<ImageHandle, EResourceError> ImageManager::loadImage(const ImageKey& key)
 	{
 		return resource_cache_.load(
 			key, 
-			 [this](const ImageKey& k)
+			 [this](const ImageKey& k) -> ResourcePtr<ImageAsset>
 			{
+			 	auto result = adapter::loadImage(k.path.string());
+			 	if (!result) return nullptr;
 				return makeOwnRs<ImageAsset>(
-					adapter::loadImage(k.path.string())
+					std::move(result.value())
 				);
 			});
 	}
 
-	std::expected<ImageObPtr, ResourceError> ImageManager::getImage(ImageHandle handle)
+	std::expected<ImageObPtr, EResourceError> ImageManager::getImage(ImageHandle handle)
 	{
 		return resource_cache_.get(handle);
 	}
 
-	std::expected<void, ResourceError> ImageManager::unloadImage(const ImageKey& key)
+	std::expected<void, EResourceError> ImageManager::unloadImage(const ImageKey& key)
 	{
 		return resource_cache_.erase(key);
 	}

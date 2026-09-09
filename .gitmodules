@@ -13,3 +13,6 @@
 [submodule "vendored/SDL_image"]
 	path = vendored/SDL_image
 	url = https://github.com/libsdl-org/SDL_image.git
+[submodule "vendored/SDL_shadercross"]
+	path = vendored/SDL_shadercross
+	url = https://github.com/libsdl-org/SDL_shadercross.git

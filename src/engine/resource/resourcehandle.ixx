@@ -7,7 +7,7 @@ import std;
 
 export namespace engine::resource
 {
-	enum class ResourceError : std::uint8_t
+	enum class EResourceError : std::uint8_t
 	{
 		NOT_FOUND,
 		INVALID_HANDLE,

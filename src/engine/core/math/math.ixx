@@ -22,7 +22,7 @@ export namespace engine::core
     using Matrix3 = glm::mat3;
     using Matrix4 = glm::mat4;
     using Quaternion = glm::quat;
-    using glm::mat4_cast;
+    Matrix4 (&castMat4)(const Quaternion&) = glm::mat4_cast;
     using glm::translate;
     using glm::inverse;
     using glm::perspective;

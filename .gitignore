@@ -1,13 +1,17 @@
-/out/
-/.vs/
-/.vscode/
-/.idea/
-/assets/
+/out
+/.vs
+/.vscode
+/.idea
+/assets
 /src/game
+/scripts
+/tools
 CMakeUserPresets.json
 *.user
 *.pdb
 *.c
+*.ps1
+*.cmd
 
 # Prerequisites
 *.d

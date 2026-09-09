@@ -22,17 +22,9 @@ export namespace engine::core
 			inline static std::optional<double> target_frame_time_;
 
 	    public:
-			Timer()
-			{
-				start_counter_ = SDL_GetTicksNS();
-				if (last_counter_ == 0)
-				{
-					last_counter_ = start_counter_;
-					delta_time_ = 0.0;
-					setTargetFPS(144);
-					return;
-				}
-			};
+			Timer() = delete;
+
+    		static void init();
 	        static void beginFrame();
 	        static void endFrame();
 
@@ -57,6 +49,19 @@ export namespace engine::core
     };
 
 }
+
+void engine::core::Timer::init()
+{
+	start_counter_ = SDL_GetTicksNS();
+	if (last_counter_ == 0)
+	{
+		last_counter_ = start_counter_;
+		delta_time_ = 0.0;
+		setTargetFPS(144);
+		return;
+	}
+}
+
 void engine::core::Timer::beginFrame()
 {
 	start_counter_ = SDL_GetTicksNS();
@@ -105,8 +110,8 @@ void engine::core::Timer::limitFrameRate()
 
 	const auto frame_time = current - start_counter_ ;
 
-	if (const std::uint64_t remaining = *target_frame_time_ * 1'000'000'000 - frame_time; remaining > 0.0)
+	if (const double remaining = *target_frame_time_ * 1'000'000'000 - frame_time; remaining > 0.0)
 	{
-		SDL_DelayNS(remaining);
+		SDL_DelayNS(static_cast<uint64_t>(remaining));
 	}
 }

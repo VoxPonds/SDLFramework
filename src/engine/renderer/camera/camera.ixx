@@ -49,7 +49,7 @@ export namespace engine::render
 
 		core::Matrix4 viewMatrix() const
 		{
-			const core::Matrix4 rotation = core::mat4_cast(orientation);
+			const core::Matrix4 rotation = core::castMat4(orientation);
 			const core::Matrix4 translation = core::translate(core::Matrix4(1.0f), position);
 
 			return core::inverse(translation * rotation);

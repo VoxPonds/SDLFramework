@@ -1,6 +1,4 @@
 module;
-#include <stdexcept>
-
 #include "SDL3_image/SDL_image.h"
 
 export module engine.resource.imageadapter;
@@ -14,7 +12,6 @@ import engine.utilities;
 import engine.core.math;
 import std;
 
-
 export namespace engine::resource
 {
 	enum class TranslateError : std::uint8_t
@@ -27,13 +24,13 @@ export namespace engine::resource
 	{
 		private:
 			static PixelFormat ConvertFormat(SDL_PixelFormat format);
-			static ImageAsset translate(SdlSurfaceObPtr surface);
+			static std::expected<ImageAsset, EResourceError> translate(SdlSurfaceObPtr surface);
 
 		public:
 			ImageAdapter() = delete;
 
 			static core::Vector2 getImageSize(utilities::ObPtr<ImageAsset> ptr);
-			static ImageAsset loadImage(std::string_view path);
+			static std::expected<ImageAsset, EResourceError> loadImage(std::string_view path);
 			
 	};
 
@@ -42,7 +39,7 @@ export namespace engine::resource
 		return core::Vector2{ ptr->width,ptr->height };
 	}
 
-	ImageAsset ImageAdapter::loadImage(std::string_view path)
+	std::expected<ImageAsset, EResourceError> ImageAdapter::loadImage(std::string_view path)
 	{
 		SdlSurfacePtr surface{
 			IMG_Load(std::string{path}.c_str())
@@ -53,6 +50,7 @@ export namespace engine::resource
 			std::println("SDL error: {}", SDL_GetError());
 			std::println("cwd = {}", std::filesystem::current_path().string());
 			std::println("image = {}", path);
+			return std::unexpected(EResourceError::LOAD_FAILED);
 		}
 
 		return translate(surface);
@@ -63,13 +61,13 @@ export namespace engine::resource
 		return static_cast<PixelFormat>(format);
 	}
 
-	ImageAsset ImageAdapter::translate(SdlSurfaceObPtr surface)
+	std::expected<ImageAsset, EResourceError> ImageAdapter::translate(SdlSurfaceObPtr surface)
 	{
 		ImageAsset image;
-		if (!surface)
+		/*if (!surface)
 		{
-			return ImageAsset{};
-		}
+			return std::unexpected(EResourceError::NULL_PTR);
+		}*/
 		image.width = surface->w;
 		image.height = surface->h;
 		image.format = ConvertFormat(surface->format);

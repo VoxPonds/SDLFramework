@@ -27,7 +27,6 @@ export namespace engine::platform
 			SdlWindow& operator=(const SdlWindow&) = delete;
 			SdlWindow(SdlWindow&&) = default;
 			SdlWindow& operator=(SdlWindow&&) = delete;
-
 	};
 
 	SdlWindow::SdlWindow()
@@ -43,7 +42,7 @@ export namespace engine::platform
 		{
 			SDL_Log("Couldn't create window: %s", SDL_GetError());
 			auto error = std::string("Failed to create SDL window: ") + SDL_GetError();
-			throw std::runtime_error(SDL_GetError());
+			throw std::runtime_error(error);
 		}
 	}
 

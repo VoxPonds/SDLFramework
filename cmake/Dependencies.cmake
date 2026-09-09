@@ -35,3 +35,17 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendored/nlohmann_json SYSTEM EXCLU
 
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendored/spdlog SYSTEM EXCLUDE_FROM_ALL)
+
+
+set(SDLSHADERCROSS_VENDORED ON CACHE BOOL "" FORCE)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendored/SDL_shadercross SYSTEM EXCLUDE_FROM_ALL)
+if(TARGET SDL3_shadercross)
+    add_custom_command(
+            TARGET SDL3_shadercross
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_BINARY_DIR}/vendored/SDL_shadercross/external/DirectXShaderCompiler/bin/dxcompiler.dll"
+            "$<TARGET_FILE_DIR:shadercross>"
+    )
+endif()

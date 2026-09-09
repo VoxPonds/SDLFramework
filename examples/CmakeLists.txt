@@ -1,1 +1,2 @@
 add_subdirectory(example2d)
+add_subdirectory(example3d)
