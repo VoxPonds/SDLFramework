@@ -18,6 +18,19 @@ export namespace engine::render
         ERenderPass pass{ERenderPass::SPRITE_WORLD};
     };
 
+    struct DrawRect2D
+    {
+        core::FrothRect rect;
+        core::FrothColor color;
+        bool filled;
+    };
+
+    struct PrimitiveCommand2D
+    {
+        std::variant<DrawRect2D> primitive_2D;
+        core::Transform2D transform_2d;
+    };
+
     struct MeshRenderCommand
     {
 
@@ -25,6 +38,7 @@ export namespace engine::render
 
     using RenderCommand2D = std::variant<
 	    SpriteRenderCommand,
+        PrimitiveCommand2D,
 	    std::monostate
     >;
 
@@ -45,6 +59,11 @@ export namespace engine::render
         void clear();
     };
 
+
+}
+
+namespace engine::render
+{
     void FrameData::add(const RenderCommand2D& command)
     {
         command2ds_.insert(command);

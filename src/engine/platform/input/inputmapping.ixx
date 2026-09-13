@@ -1,7 +1,7 @@
 module;
-#include "SDL3/SDL_scancode.h"
 
 export module engine.platform.inputsystem:inputmapping;
+import engine.platform.inputcode;
 import std.compat;
 
 export namespace engine::platform
@@ -21,11 +21,11 @@ export namespace engine::platform
 
     enum class TriggerType : uint8_t
     {
-        TRIGGER_DOWN,
         TRIGGER_PRESSED,
+        TRIGGER_DOWN,
         TRIGGER_RELEASED,
+        TRIGGER_SEQUENCE,
         TRIGGER_CHORD,
-        TRIGGER_PRESSED_REPEAT
     };
 
     enum ActionMode : uint8_t
@@ -41,23 +41,89 @@ export namespace engine::platform
         DEVICE_MOBILE,
         DEVICE_COUNT,
     };
+
+
     struct SingleInputBind
     {
-        SDL_Scancode key;
+        EInputCode key;
         TriggerType triggerType;//x. or x-
     };
 
-    struct ChordInputMapping
+    struct InputSequence
     {
-        std::vector<SingleInputBind> input_sequence_;//x.+x. or x.+y.
+        std::vector<SingleInputBind> sequence_;//x.+x. or x.+y.
         std::uint64_t tolerance_ms_ { 250 };
-        std::uint64_t lastTriggerTime{ -tolerance_ms_ };
+        std::optional<std::uint64_t> lastTriggerTime{ -tolerance_ms_ };
         std::size_t sequenceIndex{ 0 };
+
     };
 
     struct ActionProfile
     {
-        std::vector<ChordInputMapping> mapping_lists_;//x.+x. or x.+y- || a.+a.
+        std::vector<InputSequence> mapping_lists_;//x.+x. or x.+y- || a.+a.
         ActionMode actionMode{ActionMode::MODE_HOLD};
     };
+
+    template<typename Action>
+    using InputMappingList = std::unordered_map<Action, ActionProfile>;
+
+    /*template<typename Action>
+    class InputMappingList
+    {
+        private:
+            std::unordered_map<Action, ActionProfile> mappings_;
+
+        public:
+            InputMappingList(std::initializer_list<std::pair<Action, InputSequence>> mappings)
+            {
+                for (auto&& [action, sequence] : mappings)
+                {
+                    mappings_.emplace(
+                        action,
+                        ActionProfile{sequence}
+                    );
+                }
+            }
+    };*/
+
+    namespace input
+    {
+        constexpr auto makeBind(const EInputCode key, const TriggerType trigger) -> SingleInputBind
+        {
+            return
+            SingleInputBind{
+                .key = key,
+                .triggerType = trigger
+            };
+        }
+        constexpr auto makeSingleSequence(const EInputCode input, const TriggerType trigger = TriggerType::TRIGGER_PRESSED) -> InputSequence
+        {
+            return InputSequence{
+                .sequence_ = {
+                    makeBind(input, trigger)
+                }
+            };
+        }
+        constexpr auto makeSequence(const std::initializer_list<SingleInputBind> inputs) -> InputSequence
+        {
+            return InputSequence{
+                .sequence_ = inputs
+            };
+        }
+
+        constexpr auto pressed(const EInputCode input) -> InputSequence
+        {
+            return makeSingleSequence(input, TriggerType::TRIGGER_PRESSED);
+        }
+        constexpr auto down(const EInputCode input) -> InputSequence
+        {
+            return makeSingleSequence(input, TriggerType::TRIGGER_DOWN);
+        }
+        constexpr auto released(const EInputCode input) -> InputSequence
+        {
+            return makeSingleSequence(input, TriggerType::TRIGGER_RELEASED);
+        }
+    }
+
+
 }

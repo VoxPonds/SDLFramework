@@ -20,34 +20,37 @@ export namespace engine::render
 			utilities::ObPtr<FrameRecorder> recorder_borrowed;
 
 	    public:
-	        SpriteRenderer(FrameRecorder& recorder);
+	        SpriteRenderer(utilities::BrPtr<FrameRecorder> recorder);
 
 			SpriteRenderer(const SpriteRenderer&) = delete;
 			SpriteRenderer& operator=(const SpriteRenderer&) = delete;
 			SpriteRenderer(SpriteRenderer&&) = delete;
 			SpriteRenderer& operator=(SpriteRenderer&&) = delete;
 
-			std::expected<void, RendererError> drawSprite(
+			std::expected<void, ERendererError> drawSprite(
 				const Sprite& sprite, const core::Transform2D& transform,
 				FlipMode flip_mode
 			)const;
-			std::expected<void, RendererError> drawSprite(
+			std::expected<void, ERendererError> drawSprite(
 				const Sprite& sprite, const core::Vector2& position,
 				const core::Vector2& scale, float rotation, FlipMode flip_mode
 			)const;
     };
+}
 
-    SpriteRenderer::SpriteRenderer(FrameRecorder& recorder)
-		: recorder_borrowed(recorder)
-    {
-    }
+namespace engine::render
+{
+	SpriteRenderer::SpriteRenderer(const utilities::BrPtr<FrameRecorder> recorder)
+	: recorder_borrowed(recorder.get())
+	{
+	}
 
-    std::expected<void, RendererError> SpriteRenderer::drawSprite(
-    	const Sprite& sprite,
-	    const core::Transform2D& transform, 
-	    FlipMode flip_mode
-	)const 
-    {
+	std::expected<void, ERendererError> SpriteRenderer::drawSprite(
+		const Sprite& sprite,
+		const core::Transform2D& transform,
+		FlipMode flip_mode
+	)const
+	{
 		recorder_borrowed->record(
 			SpriteRenderCommand{
 				.sprite = sprite,
@@ -58,10 +61,10 @@ export namespace engine::render
 		return{};
 	}
 
-	std::expected<void, RendererError> SpriteRenderer::drawSprite(
+	std::expected<void, ERendererError> SpriteRenderer::drawSprite(
 		const Sprite& sprite, const core::Vector2& position,
 		const core::Vector2& scale, float rotation, FlipMode flip_mode
-    )const
+	)const
 	{
 		recorder_borrowed->record(
 			SpriteRenderCommand{

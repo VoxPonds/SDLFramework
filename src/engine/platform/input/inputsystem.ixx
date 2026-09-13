@@ -1,172 +1,206 @@
 module;
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_keyboard.h>
-#include "SDL3/SDL_timer.h"
 
 export module engine.platform.inputsystem;
 export import :inputmapping;
 export import :inputcontext;
+import engine.core.timer;
+import engine.core.eventtype;
 
 export namespace engine::platform
 {
-    struct InputConfig {
-        std::array<InputMappingContext, static_cast<uint8_t>(ContextType::CONTEXT_COUNT)> input_contexts_;
+    /*struct InputConfig {
+        std::array<InputMappingContext, static_cast<std::uint8_t>(ContextType::CONTEXT_COUNT)> input_contexts_;
         InputMappingContext gameplay_standard_context_;
-    };
+    };*/
 
+	template<typename ActionType>
     struct InputSystem 
     {
 	    private:
-	        std::bitset<SDL_SCANCODE_COUNT> pressed_keys_;
-	        std::bitset<SDL_SCANCODE_COUNT> released_keys_;
-	        std::bitset<SDL_SCANCODE_COUNT> repeated_keys_;
+	        std::bitset<static_cast<std::size_t>(EInputCode::KEY_COUNT)> pressed_keys_;
+			std::bitset<static_cast<std::size_t>(EInputCode::KEY_COUNT)> down_keys_;
+	        std::bitset<static_cast<std::size_t>(EInputCode::KEY_COUNT)> released_keys_;
 
 			std::span<const bool> keyboard_state_{};
 	        int keyboard_count_{};
 
-	        static bool isValidScancode(SDL_Scancode key)
+	        static bool isValidScancode(EInputCode key)
 	        {
-    			return key >= 0 && static_cast<size_t>(key) < SDL_SCANCODE_COUNT;
+    			return static_cast<std::size_t>(key) < static_cast<std::size_t>(EInputCode::KEY_COUNT);
     		}
 
 		public:
-	        InputConfig input_config_;
-	        std::unordered_map<StandardAction, ActionProfile>& action_mapping_ = input_config_.gameplay_standard_context_.actionMapping;
+	        InputMappingList<ActionType> action_mapping_;
 
 	        uint8_t game_index = 0;
 
+	        explicit InputSystem(InputMappingList<ActionType> mapping_list);
+
 			void beginFrame();
 
-	        void processEvent(const SDL_Event& event);
+			void endFrame();
 
-	        bool getActionEvent(StandardAction action)const;
+			void reset();
 
-	        bool checkKeyDown(SDL_Scancode key) const;
+	        void processEvent(const core::Event& event);
 
-	        bool checkKeyPressed(SDL_Scancode key) const;
+	        bool getActionEvent(ActionType action);
 
-	        bool checkKeyReleased(SDL_Scancode key)const;
+			bool checkKeyDown(EInputCode key) const;
 
-	        bool chordPatternMatch(ChordInputMapping& pattern)const;
+	        bool checkKeyPressed(EInputCode key) const;
 
-	        bool checkKeyPressedRepeat(SDL_Scancode key) const;
+	        bool checkKeyReleased(EInputCode key)const;
 
-	        bool checkTrigger(SDL_Scancode key) const;
+	        bool matchSequence(InputSequence& pattern)const;
+
+	        bool checkTrigger(EInputCode key) const;
 
     };
 
-    void InputSystem::beginFrame()
+	template<typename ActionType>
+	InputSystem<ActionType>::InputSystem(InputMappingList<ActionType> mapping_list):
+		action_mapping_(std::move(mapping_list))
+	{
+
+	}
+
+	template<typename ActionType>
+	void InputSystem<ActionType>::beginFrame()
     {
-	    pressed_keys_.reset();
-	    released_keys_.reset();
-	    repeated_keys_.reset();
-		keyboard_state_ = { SDL_GetKeyboardState(&keyboard_count_), static_cast<size_t>(keyboard_count_) };
     }
 
-    void InputSystem::processEvent(const SDL_Event& event)
+	template<typename ActionType>
+	void InputSystem<ActionType>::endFrame()
+	{
+	}
+
+	template<typename ActionType>
+	void InputSystem<ActionType>::reset()
+	{
+		pressed_keys_.reset();
+		released_keys_.reset();
+		down_keys_.reset();
+		//keyboard_state_ = { SDL_GetKeyboardState(&keyboard_count_), static_cast<size_t>(keyboard_count_) };
+	}
+
+	template<typename ActionType>
+    void InputSystem<ActionType>::processEvent(const core::Event& event)
     {
-	    switch (event.type)
-	    {
-		    case SDL_EVENT_KEY_DOWN:
-			    {
-					if (event.key.repeat)
+		if (const auto* key = std::get_if<core::KeyboardEvent>(&event))
+		{
+			switch (key->type)
+			{
+				case core::EEventType::EVENT_KEY_DOWN:
+				{
+					if (key->down)
 					{
-						repeated_keys_.set(event.key.scancode);
+						down_keys_.set(static_cast<std::size_t>(key->scancode));
 					}
 					else
 					{
-						pressed_keys_.set(event.key.scancode);
+						pressed_keys_.set(static_cast<std::size_t>(key->scancode));
 					}
 					break;
-			    }
-		    case SDL_EVENT_KEY_UP:
-			    {
-					released_keys_.set(event.key.scancode);
+				}
+				case core::EEventType::EVENT_KEY_UP:
+				{
+					released_keys_.set(static_cast<std::size_t>(key->scancode));
 					break;
-			    }
-		    default:
-			    {
+				}
+				default:
 					break;
-			    }
-	    }
+			}
+		}
     }
 
-    bool InputSystem::getActionEvent(StandardAction action)const
+	template<typename ActionType>
+    bool InputSystem<ActionType>::getActionEvent(ActionType action)
     {
-	   // std::vector<ChordInputMapping>& action_chord_lists_ = this->action_mapping_[action].mapping_lists_;
     	auto it = action_mapping_.find(action);
-    	if (it == action_mapping_.end())return false;
+    	if (it == action_mapping_.end()) return false;
 
-    	auto& action_chord_lists_ = it->second.mapping_lists_;
-	    for (auto& chord_bind_ : action_chord_lists_)
-	    //for(const auto& firstMatch : chordbind.input_sequence_)
+    	auto& action_sequence_lists_ = it->second.mapping_lists_;
+	    for (auto& pattern : action_sequence_lists_)
 	    {
-			if (chord_bind_.input_sequence_.empty()) continue;
+			if (pattern.sequence_.empty()) continue;
 
-		    const SingleInputBind& single_bind_ = chord_bind_.input_sequence_[0];
-		    switch (single_bind_.triggerType)
+			switch (const SingleInputBind& single_bind_ = pattern.sequence_[0]; single_bind_.triggerType)
 		    {
-			    case TriggerType::TRIGGER_DOWN:
-				    {
-					    if (checkKeyDown(single_bind_.key)) return true;
-					    else continue;
-				    }
 			    case TriggerType::TRIGGER_PRESSED:
-				    {
-					    if (chordPatternMatch(chord_bind_)) return true;
-					    else continue;
-				    }
+			    {
+				    if (matchSequence(pattern)) return true;
+			    	continue;
+			    }
+		    	case TriggerType::TRIGGER_DOWN:
+		    	{
+		    		if (checkKeyDown(single_bind_.key)) return true;
+		    		continue;
+		    	}
 			    case TriggerType::TRIGGER_RELEASED:
-				    {
-					    if (checkKeyReleased(single_bind_.key)) return true;
-					    else continue;
-				    }
-			    case TriggerType::TRIGGER_CHORD:
-				    {
-					    if (chordPatternMatch(chord_bind_)) return true;
-					    else continue;
-				    }
-			    case TriggerType::TRIGGER_PRESSED_REPEAT:
-				    {
-					    if (checkKeyPressedRepeat(single_bind_.key)) return true;
-					    else continue;
-				    }
+			    {
+				    if (checkKeyReleased(single_bind_.key)) return true;
+				    continue;
+			    }
+			    case TriggerType::TRIGGER_SEQUENCE:
+			    {
+				    if (matchSequence(pattern)) return true;
+				    continue;
+			    }
 			    default:
-				    {
-					    return false;
-				    }
+			    {
+			    	std::unreachable();
+				    return false;
+			    }
 		    }
 	    }
 	    return false;
     }
 
-    bool InputSystem::checkKeyDown(SDL_Scancode key) const
+	/*template<typename ActionType>
+    bool InputSystem<ActionType>::checkKeyBoardState(SDL_Scancode key) const
     {
-    	if (!InputSystem::isValidScancode(key)) return false;
+		if (!isValidScancode(key)) return false;
 		return keyboard_state_[key];
+    }*/
+
+	template<typename ActionType>
+    bool InputSystem<ActionType>::checkKeyPressed(EInputCode key) const
+    {
+		if (!isValidScancode(key)) return false;
+		return pressed_keys_.test(static_cast<std::size_t>(key));
     }
 
-    bool InputSystem::checkKeyPressed(SDL_Scancode key) const
+	template<typename ActionType>
+	bool InputSystem<ActionType>::checkKeyDown(EInputCode key) const
+	{
+		if (!isValidScancode(key)) return false;
+		return down_keys_.test(static_cast<std::size_t>(key));
+	}
+
+	template<typename ActionType>
+    bool InputSystem<ActionType>::checkKeyReleased(EInputCode key) const
     {
-		return pressed_keys_.test(key);
+		if (!isValidScancode(key)) return false;
+		return released_keys_.test(static_cast<std::size_t>(key));
     }
 
-    bool InputSystem::checkKeyReleased(SDL_Scancode key) const
+	template<typename ActionType>
+    bool InputSystem<ActionType>::matchSequence(InputSequence& pattern)const
     {
-		return released_keys_.test(key);
-    }
-
-    bool InputSystem::chordPatternMatch(ChordInputMapping& pattern)const
-    {
-	    if (pattern.input_sequence_.empty()) return false;
-
+	    if (pattern.sequence_.empty()) return false;
+		if (pattern.sequenceIndex >= pattern.sequence_.size()) pattern.sequenceIndex = 0;
 	    size_t index = pattern.sequenceIndex;
-		SDL_Scancode needKey = pattern.input_sequence_[index].key;
+		EInputCode needKey = pattern.sequence_[index].key;
 
 	    if (checkKeyPressed(needKey))
 	    {
-			std::uint64_t now = SDL_GetTicks();
-			std::uint64_t diff = now - pattern.lastTriggerTime;
+			std::uint64_t now = core::Timer::getTicks();
+	    	if (!pattern.lastTriggerTime)
+	    	{
+	    		pattern.lastTriggerTime = now;
+	    	}
+			std::uint64_t diff = now - pattern.lastTriggerTime.value();
 		    if (diff > pattern.tolerance_ms_)
 		    {
 			    index = 0;
@@ -177,7 +211,7 @@ export namespace engine::platform
 			    //std::cout << std::format("index:{}\n", pattern.sequenceIndex);
 			    pattern.lastTriggerTime = now;
 			    pattern.sequenceIndex++;
-			    if (pattern.sequenceIndex == pattern.input_sequence_.size())
+			    if (pattern.sequenceIndex == pattern.sequence_.size())
 			    {
 				    pattern.sequenceIndex = 0;
 				    return true;
@@ -191,13 +225,13 @@ export namespace engine::platform
 	    return false;
     }
 
-    bool InputSystem::checkKeyPressedRepeat(SDL_Scancode key) const
+	template<typename ActionType>
+    bool InputSystem<ActionType>::checkTrigger(EInputCode key) const
     {
-		return repeated_keys_.test(key);
-    }
-
-    bool InputSystem::checkTrigger(SDL_Scancode key) const
-    {
+		if (!isValidScancode(key)) return false;
 	    return checkKeyPressed(key) || checkKeyReleased(key) || checkKeyDown(key);
     }
+
+	template<typename ActionType>
+	InputSystem(const InputMappingList<ActionType>& mapping_list)->InputSystem<ActionType>;
 }

@@ -11,6 +11,7 @@ import engine.render.sdlrenderer;
 import engine.render.framerecorder;
 import engine.render.sdlgpurenderer;
 import engine.render.sdlgpudevice;
+import engine.render.sdlgpucommandcontext;
 import engine.resource.resourcemanager;
 import engine.platform.sdlptr;
 import engine.utilities;
@@ -20,7 +21,7 @@ export namespace engine::render
 {
 	template<typename Func>
 	concept BackendVisitor =
-		std::invocable<Func&&, SdlRenderer&> &&
+		std::invocable<Func&&, SdlRenderer&>&&
 		std::invocable<Func&&, SdlGpuRenderer&>;
 	struct RendererService
 	{
@@ -41,7 +42,8 @@ export namespace engine::render
 			auto visitBackend(Func&& func) -> decltype(auto);
 
 			void beginFrame();
-			std::expected<void, RendererError> run();
+			std::expected<void, ERendererError> run();
+			std::expected<void, EGpuError> testSdlGpu();
 			void endFrame();
 	};
 
@@ -56,7 +58,7 @@ export namespace engine::render
 		return recorder_;
 	}
 
-	auto RendererService::createDevice(ERenderBackend type, SDL_Window &window_ref) -> RendererDevice
+	auto RendererService::createDevice(const ERenderBackend type, SDL_Window &window_ref) -> RendererDevice
 	{
 		switch(type)
 		{
@@ -83,11 +85,17 @@ export namespace engine::render
 				using DT = std::remove_cvref_t<T>;
 				if constexpr(std::is_same_v<DT, SdlRenderDevice>)
 				{
-					return Renderer{std::in_place_type<SdlRenderer>, device.getRendererPtr(), manager_ref};
+					return Renderer{
+						std::in_place_type<SdlRenderer>,
+						device.get(), manager_ref
+					};
 				}
 				else if constexpr(std::is_same_v<DT, SdlGpuDevice>)
 				{
-					return Renderer{std::in_place_type<SdlGpuRenderer>, device.getSdlGpu(), manager_ref};
+					return Renderer{
+						std::in_place_type<SdlGpuRenderer>,
+						utilities::borrow(device), manager_ref
+					};
 				}
 				std::unreachable();
 			},
@@ -109,7 +117,7 @@ export namespace engine::render
 		recorder_.beginFrame();
 	}
 
-	std::expected<void, RendererError> RendererService::run()
+	std::expected<void, ERendererError> RendererService::run()
 	{
 		return std::visit(
 			[this](auto& backend)
@@ -118,6 +126,12 @@ export namespace engine::render
 			},
 			renderer
 		);
+	}
+
+	std::expected<void, EGpuError> RendererService::testSdlGpu()
+	{
+		const auto sdl_gpu_renderer = std::get_if<SdlGpuRenderer>(&renderer);
+		return sdl_gpu_renderer->renderTest();
 	}
 
 	void RendererService::endFrame()

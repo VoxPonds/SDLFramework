@@ -33,8 +33,10 @@ export namespace engine::resource
 			std::expected<core::Vector2, EResourceError> getImageSize(ImageObPtr texture_ptr) const;
 			std::expected<ImageHandle, EResourceError> loadImage(const ImageKey& key);
 	};
+}
 
-
+namespace engine::resource
+{
 	std::expected<ImageObPtr, EResourceError> ResourceManager::getImage(ImageHandle handle)
 	{
 		return image_manager_.getImage(handle);

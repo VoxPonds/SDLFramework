@@ -68,6 +68,30 @@ export namespace engine::resource
 		static constexpr auto destroy_func = SDL_DestroySurface;
 	};
 
+	template<>
+	struct DeleterTraits<SDL_GPUShader>
+	{
+		static constexpr auto destroy_func = SDL_ReleaseGPUShader;
+	};
+
+	template<>
+	struct DeleterTraits<SDL_GPUBuffer>
+	{
+		static constexpr auto destroy_func = SDL_ReleaseGPUBuffer;
+	};
+
+	template<>
+	struct DeleterTraits<SDL_GPUGraphicsPipeline>
+	{
+		static constexpr auto destroy_func = SDL_ReleaseGPUGraphicsPipeline;
+	};
+
+	template<>
+	struct DeleterTraits<SDL_GPUTransferBuffer>
+	{
+		static constexpr auto destroy_func = SDL_ReleaseGPUTransferBuffer;
+	};
+
 	template<typename T>
 	struct Deleter
 	{
@@ -85,6 +109,23 @@ export namespace engine::resource
 		{
 			if (ptr) DestroyFunc(ptr);
 		}
+	};
+
+	template<typename T>
+	struct GpuDeleter
+	{
+		private:
+			SDL_GPUDevice* device_{nullptr};
+
+		public:
+			explicit GpuDeleter(SDL_GPUDevice* device) noexcept:
+				device_(device)
+			{
+			}
+			void operator()(T* ptr) const noexcept
+			{
+				if (ptr)  DeleterTraits<T>::destroy_func(device_, ptr);
+			}
 	};
 
 	template<>
@@ -108,4 +149,29 @@ export namespace engine::resource
 	{
 		using Deleter = Deleter<SDL_Surface>;
 	};
+
+	template<>
+	struct ResourceTraits<SDL_GPUShader>
+	{
+		using Deleter = GpuDeleter<SDL_GPUShader>;
+	};
+
+	template<>
+	struct ResourceTraits<SDL_GPUBuffer>
+	{
+		using Deleter = GpuDeleter<SDL_GPUBuffer>;
+	};
+
+	template<>
+	struct ResourceTraits<SDL_GPUGraphicsPipeline>
+	{
+		using Deleter = GpuDeleter<SDL_GPUGraphicsPipeline>;
+	};
+
+	template<>
+	struct ResourceTraits<SDL_GPUTransferBuffer>
+	{
+		using Deleter = GpuDeleter<SDL_GPUTransferBuffer>;
+	};
+
 }

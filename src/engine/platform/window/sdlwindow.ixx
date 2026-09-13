@@ -20,22 +20,25 @@ export namespace engine::platform
 			SdlWindow();
 			~SdlWindow() = default;
 
-			WindowObPtr getWindowPtr() const;
-			SDL_Window& getWindowRef() const;
+			WindowObPtr getPtr() const;
+			SDL_Window& getRef() const;
 
 			SdlWindow(const SdlWindow&) = delete;
 			SdlWindow& operator=(const SdlWindow&) = delete;
 			SdlWindow(SdlWindow&&) = default;
 			SdlWindow& operator=(SdlWindow&&) = delete;
 	};
+}
 
+namespace engine::platform
+{
 	SdlWindow::SdlWindow()
 	{
 		window_ptr = WindowPtr(
 			SDL_CreateWindow(
-				"Hello World", 
-				1280, 
-				720, 
+				"",
+				1280,
+				720,
 				SDL_WINDOW_RESIZABLE)
 		);
 		if (!window_ptr)
@@ -48,15 +51,15 @@ export namespace engine::platform
 
 	SdlWindow::SdlWindow(WindowPtr window_ptr) : window_ptr(std::move(window_ptr))
 	{
-		
+
 	}
 
-	WindowObPtr SdlWindow::getWindowPtr() const
+	WindowObPtr SdlWindow::getPtr() const
 	{
 		return window_ptr;
 	}
 
-	SDL_Window& SdlWindow::getWindowRef() const
+	SDL_Window& SdlWindow::getRef() const
 	{
 		return *window_ptr.get();
 	}
@@ -74,7 +77,6 @@ export namespace engine::platform
 
 		return SdlWindow(std::move(ptr));
 	}
-
 }
 
 

@@ -12,7 +12,6 @@ import engine.resource.imageasset;
 import engine.platform.sdlptr;
 import std;
 
-
 export namespace engine::render
 {
 	class TextureManager final
@@ -38,10 +37,13 @@ export namespace engine::render
 			std::expected<void, resource::EResourceError> unloadTexture(const resource::ImageHandle& key);
 			void clearTextures();
 	};
+}
 
+namespace engine::render
+{
 	TextureManager::TextureManager(SDL_Renderer& renderer_, resource::ResourceManager& manager):
-		renderer_adapter(renderer_),
-		cpu_Rs_Manager(manager)
+	renderer_adapter(renderer_),
+	cpu_Rs_Manager(manager)
 	{
 	}
 

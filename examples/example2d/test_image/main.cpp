@@ -4,11 +4,12 @@
 #include <froth/entry.h>
 #ifdef FROTH_MANUAL_FRAMEWORK_MODE
 import engine.core.runtime;
-import example2d;
+import example2d.imgae;
+import engine.render.rendertypes;
 
 int main(int argc, char* argv[])
 {
-	auto& runtime = engine::core::Runtime<GameApp>::instance();
+	auto& runtime = engine::core::Runtime<GameApp>::instance(engine::render::ERenderBackend::SDL_RENDERER);
 	runtime.init();
 
 	while (runtime.isRunning())
@@ -28,7 +29,7 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef FROTH_DELEGATE_FRAMEWORK_MODE
-import example2d;
+import example2d.imgae;
 FROTH_RUN_APP(GameApp)
 #endif
 

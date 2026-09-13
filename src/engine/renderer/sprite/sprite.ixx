@@ -43,10 +43,13 @@ export namespace engine::render
 
 			void setSourceRect(const std::optional<ImageRect>& source_rect);
 	};
+}
 
+namespace engine::render
+{
 	Sprite::Sprite(resource::ImageHandle image_handle, const std::optional<ImageRect>& source_rect)
-		:	image_(image_handle),
-			source_rect_(source_rect)
+	:	image_(image_handle),
+		source_rect_(source_rect)
 	{
 	}
 
@@ -69,6 +72,4 @@ export namespace engine::render
 	{
 		source_rect_ = source_rect;
 	}
-
-	
 }

@@ -21,7 +21,7 @@ export namespace engine::render
                 return static_cast<Derived&>(*this);
             }
         public:
-            std::expected<void, RendererError> render(const FrameData& data)
+            std::expected<void, ERendererError> render(const FrameData& data)
             {
                 auto& self = derived();
 
@@ -38,13 +38,13 @@ export namespace engine::render
     {
 	    public:
 	        virtual ~IRendererBackend() = default;
-            virtual std::expected<void, RendererError> render(const FrameData& data) = 0;
+            virtual std::expected<void, ERendererError> render(const FrameData& data) = 0;
 
 	        virtual void beginFrame() = 0;
 	        virtual void clear() = 0;
             //virtual std::expected<void, RendererError> execute(const RenderCommand2D& render_command_2d) = 0;
-            virtual std::expected<void, RendererError> execute(const RenderCommand3D& render_command_3d);
-            virtual std::expected<void, RendererError> execute(const Camera& camera, const RenderCommand2D& render_command_2d)= 0;
+            virtual std::expected<void, ERendererError> execute(const RenderCommand3D& render_command_3d);
+            virtual std::expected<void, ERendererError> execute(const Camera& camera, const RenderCommand2D& render_command_2d)= 0;
             
             
 	        virtual void present() = 0;
@@ -52,9 +52,9 @@ export namespace engine::render
     };
 
 
-    std::expected<void, RendererError> IRendererBackend::execute(const RenderCommand3D& render_command_3d)
+    std::expected<void, ERendererError> IRendererBackend::execute(const RenderCommand3D& render_command_3d)
     {
-        return std::unexpected(RendererError::UNSUPPORTED_COMMAND);
+        return std::unexpected(ERendererError::UNSUPPORTED_COMMAND);
     }
 
     using RenderObPtr = utilities::ObPtr<IRendererBackend>;

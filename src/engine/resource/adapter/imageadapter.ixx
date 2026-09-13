@@ -33,7 +33,10 @@ export namespace engine::resource
 			static std::expected<ImageAsset, EResourceError> loadImage(std::string_view path);
 			
 	};
+}
 
+namespace engine::resource
+{
 	core::Vector2 ImageAdapter::getImageSize(utilities::ObPtr<ImageAsset> ptr)
 	{
 		return core::Vector2{ ptr->width,ptr->height };

@@ -34,9 +34,8 @@ export namespace engine::resource
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
 	class ResourceCache
 	{
-		using hash = ResourceTraits<Resource>::Hash;
 		private:
-			std::unordered_map<Key, ResourceHandle<Resource>, hash> key_to_handle_;
+			std::unordered_map<Key, ResourceHandle<Resource>, typename ResourceTraits<Resource>::Hash> key_to_handle_;
 			std::vector<ResourceSlot<Resource>> slots_;
 			std::vector<typename ResourceHandle<Resource>::IdType> free_slots_;
 

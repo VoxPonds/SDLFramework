@@ -28,6 +28,20 @@ export namespace engine::core
     using glm::perspective;
     using glm::ortho;
 
+    struct FrothRect
+    {
+        Vector2 position;
+        Vector2 size;
+    };
+
+    struct FrothColor
+    {
+        float r{};
+        float g{};
+        float b{};
+        float a{1.0f};
+    };
+
     struct Transform2D
     {
         Vector2 position{};

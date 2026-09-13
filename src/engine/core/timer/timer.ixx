@@ -29,6 +29,7 @@ export namespace engine::core
 	        static void endFrame();
 
 			static double deltaTime();
+    		static std::uint64_t getTicks();
 	        /*
 	        double unscaledDeltaTime() const;
 	        double totalTime() const;
@@ -47,71 +48,79 @@ export namespace engine::core
 			Timer& operator=(Timer&&) = delete;
 
     };
-
 }
 
-void engine::core::Timer::init()
+namespace engine::core
 {
-	start_counter_ = SDL_GetTicksNS();
-	if (last_counter_ == 0)
+	void Timer::init()
 	{
+		start_counter_ = SDL_GetTicksNS();
+		if (last_counter_ == 0)
+		{
+			last_counter_ = start_counter_;
+			delta_time_ = 0.0;
+			setTargetFPS(144);
+			return;
+		}
+	}
+
+	void Timer::beginFrame()
+	{
+		start_counter_ = SDL_GetTicksNS();
+
+		delta_time_ = (start_counter_ - last_counter_) / 1'000'000'000.0;
+		//SDL_Log("Delta Time: %f", delta_time_);
 		last_counter_ = start_counter_;
-		delta_time_ = 0.0;
-		setTargetFPS(144);
-		return;
 	}
-}
 
-void engine::core::Timer::beginFrame()
-{
-	start_counter_ = SDL_GetTicksNS();
-
-	delta_time_ = (start_counter_ - last_counter_) / 1'000'000'000.0;
-	SDL_Log("Delta Time: %f", delta_time_);
-	last_counter_ = start_counter_;
-}
-
-void engine::core::Timer::endFrame()
-{
-	limitFrameRate();
-}
-
-double engine::core::Timer::deltaTime()
-{
-	return delta_time_;
-}
-
-void engine::core::Timer::setTimeScale(double scale)
-{
-	time_scale_ = std::max(0.0,scale);
-}
-
-void engine::core::Timer::setTargetFPS(const int fps)
-{
-	target_fps_ = std::max(0, fps);
-
-	target_frame_time_ =
-		target_fps_ > 0
-		? std::make_optional(1.0f / target_fps_)
-		: std::nullopt;
-}
-
-std::uint16_t engine::core::Timer::getTargetFPS()
-{
-	return target_fps_;
-}
-
-
-void engine::core::Timer::limitFrameRate()
-{
-	if (!target_frame_time_) return;
-
-	const auto current = SDL_GetTicksNS();
-
-	const auto frame_time = current - start_counter_ ;
-
-	if (const double remaining = *target_frame_time_ * 1'000'000'000 - frame_time; remaining > 0.0)
+	void Timer::endFrame()
 	{
-		SDL_DelayNS(static_cast<uint64_t>(remaining));
+		limitFrameRate();
+	}
+
+	double Timer::deltaTime()
+	{
+		return delta_time_;
+	}
+
+	std::uint64_t Timer::getTicks()
+	{
+		return SDL_GetTicks();
+	}
+
+	void Timer::setTimeScale(double scale)
+	{
+		time_scale_ = std::max(0.0,scale);
+	}
+
+	void Timer::setTargetFPS(const int fps)
+	{
+		target_fps_ = std::max(0, fps);
+
+		target_frame_time_ =
+			target_fps_ > 0
+			? std::make_optional(1.0f / target_fps_)
+			: std::nullopt;
+	}
+
+	std::uint16_t Timer::getTargetFPS()
+	{
+		return target_fps_;
+	}
+
+	void Timer::limitFrameRate()
+	{
+		if (!target_frame_time_) return;
+
+		const auto current = SDL_GetTicksNS();
+
+		const auto frame_time = current - start_counter_ ;
+
+		if (const double remaining = *target_frame_time_ * 1'000'000'000 - frame_time; remaining > 0.0)
+		{
+			SDL_DelayNS(static_cast<uint64_t>(remaining));
+		}
 	}
 }
+
+

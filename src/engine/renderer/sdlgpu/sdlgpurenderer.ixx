@@ -4,72 +4,51 @@ export module engine.render.sdlgpurenderer;
 
 import engine.platform.sdlptr;
 import engine.render.rendererbackend;
+import engine.render.sdlgpucommandcontext;
 import engine.render.framerecorder;
 import engine.render.framedata;
 import engine.render.camera;
+import engine.render.sdlgpudevice;
 import engine.resource.resourcemanager;
+import engine.resource.resourceptr;
+import engine.utilities;
 import std;
 
 export namespace engine::render
 {
+    enum class EFrameState : std::uint8_t
+    {
+        IDLE,
+        RECORDING,
+    };
     class SdlGpuRenderer
     {
         private:
-            platform::SdlGpuDeviceObPtr sdl_gpu_ptr;
-            resource::ResourceManager& resource_manager_borrowed;
+            utilities::ObserverPtr<SdlGpuDevice> device_wrapper_;
+            platform::SdlGpuDeviceObPtr device_;
+            resource::ResourceManager& resource_manager_borrowed_;
+            //platform::GPUCommandBufferObPtr command_buffer_;
+            std::optional<SdlGpuCommandContext> command_context_;
+            resource::SdlGpuTextureObPtr swapchain_texture_;
+            EFrameState frame_state_;
 
         public:
-            SdlGpuRenderer(platform::SdlGpuDeviceObPtr renderer, resource::ResourceManager& manager);
-            void beginFrame();
+            SdlGpuRenderer(utilities::BorrowedPtr<SdlGpuDevice> device, resource::ResourceManager& manager);
 
-            void clear();
+            auto beginFrame() const -> std::expected<void, EGpuError>;
 
-            void endFrame();
+            auto clear() -> std::expected<void, EGpuError>;
 
-            std::expected<void, RendererError> execute(const RenderCommand3D &render_command_3d);
+            auto endFrame() -> std::expected<void, EGpuError>;
 
-            std::expected<void, RendererError> execute(const Camera &camera,const RenderCommand2D &render_command_2d);
+            auto execute(const RenderCommand3D &render_command_3d) -> std::expected<void, EGpuError>;
 
-            void present();
+            auto submit(platform::GPUCommandBufferBrPtr command_buffer) -> std::expected<void, EGpuError>;
 
-            std::expected<void, RendererError>
-            render(const FrameData &data);
+            auto renderTest() -> std::expected<void, EGpuError>;
+
+            auto render(const FrameData &data) -> std::expected<void, ERendererError>;
     };
-
-    SdlGpuRenderer::SdlGpuRenderer(platform::SdlGpuDeviceObPtr renderer, resource::ResourceManager& manager):
-        sdl_gpu_ptr(renderer),
-        resource_manager_borrowed(manager)
-    {
-    }
-
-    void SdlGpuRenderer::beginFrame()
-    {
-    }
-
-    void SdlGpuRenderer::clear()
-    {
-    }
-
-    void SdlGpuRenderer::endFrame()
-    {
-    }
-
-    std::expected<void, RendererError> SdlGpuRenderer::execute(const RenderCommand3D &render_command_3d)
-    {
-        return {};
-    }
-
-    std::expected<void, RendererError> SdlGpuRenderer::execute(const Camera &camera, const RenderCommand2D &render_command_2d)
-    {
-        return{};
-    }
-
-    void SdlGpuRenderer::present()
-    {
-    }
-
-    std::expected<void, RendererError> SdlGpuRenderer::render(const FrameData &data)
-    {
-        return {};
-    }
 }
+
+

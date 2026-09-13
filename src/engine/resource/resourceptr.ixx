@@ -9,17 +9,16 @@ import std;
 
 export namespace engine::resource
 {
+	template<typename T, auto Deleter>
+	using CustomResourcePtr = std::unique_ptr<T, FuncDeleter<Deleter>>;
+
 	template<typename T>
 	using ResourcePtr = std::unique_ptr<T, typename ResourceTraits<T>::Deleter>;
 
 	template<typename T, typename... Args>
 	ResourcePtr<T> makeOwnRs(Args&&... args)
 	{
-		return ResourcePtr<T>{
-			new T{
-				std::forward<Args>(args)...
-			}
-		};
+		return ResourcePtr<T>{new T{std::forward<Args>(args)...}};
 	}
 	
 	using ImagePtr = ResourcePtr<ImageAsset>;
@@ -31,5 +30,21 @@ export namespace engine::resource
 	using SdlSurfacePtr = ResourcePtr<SDL_Surface>;
 	using SdlSurfaceObPtr = utilities::ObPtr<SDL_Surface>;
 
+	using SdlGpuShaderPtr = ResourcePtr<SDL_GPUShader>;
+	using SdlGpuShaderObPtr = utilities::ObPtr<SDL_GPUShader>;
+
+	using SdlGpuBufferPtr = ResourcePtr<SDL_GPUBuffer>;
+	using SdlGpuBufferObPtr = utilities::ObPtr<SDL_GPUBuffer>;
+	using SdlGpuBufferBrPtr = utilities::BrPtr<SDL_GPUBuffer>;
+
+	using SdlGpuTransferBufferPtr = ResourcePtr<SDL_GPUTransferBuffer>;
+	using SdlGpuTransferBufferObPtr = utilities::ObPtr<SDL_GPUTransferBuffer>;
+
+	using SdlGpuGraphicsPipelinePtr = ResourcePtr<SDL_GPUGraphicsPipeline>;
+	using SdlGpuGraphicsPipelineObPtr = utilities::ObPtr<SDL_GPUGraphicsPipeline>;
+	using SdlGpuGraphicsPipelineBrPtr = utilities::BrPtr<SDL_GPUGraphicsPipeline>;
+
+	using SdlGpuTextureObPtr = utilities::ObPtr<SDL_GPUTexture>;
+	using SdlGpuTextureBrPtr = utilities::BrPtr<SDL_GPUTexture>;
 
 }

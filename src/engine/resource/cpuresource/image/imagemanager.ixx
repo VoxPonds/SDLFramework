@@ -57,7 +57,10 @@ export namespace engine::resource
 			return std::unexpected(handle.error());
 		}
 	}
+};
 
+namespace engine::resource
+{
 	std::expected<core::Vector2, EResourceError> ImageManager::getImageSize(ImageObPtr texture_ptr) const
 	{
 		if (!texture_ptr) return std::unexpected(EResourceError::NULL_PTR);
@@ -74,11 +77,11 @@ export namespace engine::resource
 	std::expected<ImageHandle, EResourceError> ImageManager::loadImage(const ImageKey& key)
 	{
 		return resource_cache_.load(
-			key, 
+			key,
 			 [this](const ImageKey& k) -> ResourcePtr<ImageAsset>
 			{
-			 	auto result = adapter::loadImage(k.path.string());
-			 	if (!result) return nullptr;
+				 auto result = adapter::loadImage(k.path.string());
+				 if (!result) return nullptr;
 				return makeOwnRs<ImageAsset>(
 					std::move(result.value())
 				);
@@ -99,5 +102,5 @@ export namespace engine::resource
 	{
 		resource_cache_.clear();
 	}
-};
+}
 

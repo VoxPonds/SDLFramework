@@ -3,8 +3,7 @@
 
 import std;
 
-
-static std::vector<Uint8> readBinaryFile(const std::filesystem::path& path)
+static constexpr std::vector<Uint8> readBinaryFile(const std::filesystem::path& path)
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file)
@@ -23,7 +22,7 @@ static std::vector<Uint8> readBinaryFile(const std::filesystem::path& path)
     return data;
 }
 
-static SDL_GPUShader* loadShader(SDL_GPUDevice* device, const std::filesystem::path& path, const SDL_GPUShaderStage stage)
+static constexpr SDL_GPUShader* loadShader(SDL_GPUDevice* device, const std::filesystem::path& path, const SDL_GPUShaderStage stage)
 {
     const auto code = readBinaryFile(path);
 
@@ -66,7 +65,7 @@ int main(int argc, char* argv[])
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
-        std::println("SDL_Init failed: %s\n", SDL_GetError());
+        std::println("SDL_Init failed: {}", SDL_GetError());
         return 1;
     }
 
@@ -78,7 +77,7 @@ int main(int argc, char* argv[])
     );
     if (!window)
     {
-        std::println("SDL_CreateWindow failed: %s\n", SDL_GetError());
+        std::println("SDL_CreateWindow failed: {}", SDL_GetError());
         SDL_Quit();
         return 1;
     }
@@ -95,7 +94,7 @@ int main(int argc, char* argv[])
 );
     if (!device)
     {
-        std::println("SDL_CreateGPUDevice failed: %s\n", SDL_GetError());
+        std::println("SDL_CreateGPUDevice failed: {}", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
@@ -103,7 +102,7 @@ int main(int argc, char* argv[])
 
     if (!SDL_ClaimWindowForGPUDevice(device, window))
     {
-        std::println("SDL_ClaimWindowForGPUDevice failed: %s\n",SDL_GetError());
+        std::println("SDL_ClaimWindowForGPUDevice failed: {}",SDL_GetError());
         SDL_DestroyGPUDevice(device);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -137,7 +136,7 @@ int main(int argc, char* argv[])
     SDL_GPUBuffer* gpu_buffer = SDL_CreateGPUBuffer(device, &buffer_info);
     if (!gpu_buffer)
     {
-        std::println("SDL_CreateGPUBuffer failed: {}\n",SDL_GetError());
+        std::println("SDL_CreateGPUBuffer failed: {}",SDL_GetError());
         return 1;
     }
 
@@ -150,7 +149,7 @@ int main(int argc, char* argv[])
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_info);
     if (!transfer_buffer)
     {
-        std::println("SDL_CreateGPUTransferBuffer failed: {}\n",SDL_GetError());
+        std::println("SDL_CreateGPUTransferBuffer failed: {}",SDL_GetError());
         SDL_ReleaseGPUBuffer(device, gpu_buffer);
         return 1;
     }
@@ -158,7 +157,7 @@ int main(int argc, char* argv[])
     void* mapped = SDL_MapGPUTransferBuffer(device, transfer_buffer,true);
     if (!mapped)
     {
-        std::println("SDL_MapGPUTransferBuffer failed: {}\n",SDL_GetError());
+        std::println("SDL_MapGPUTransferBuffer failed: {}",SDL_GetError());
         SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
         SDL_ReleaseGPUBuffer(device, gpu_buffer);
         return 1;
@@ -257,7 +256,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-
     bool running = true;
     while (running)
     {
@@ -293,7 +291,7 @@ int main(int argc, char* argv[])
         {
             constexpr SDL_FColor clear_color{
                 .r = 0.0f,
-                .g = 1.1f,
+                .g = 0.1f,
                 .b = 0.15f,
                 .a = 1.0f
             };

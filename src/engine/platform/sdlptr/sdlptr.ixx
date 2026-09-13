@@ -58,6 +58,10 @@ export namespace engine::platform
 
 	using SdlGpuDevicePtr = SdlPtr<SDL_GPUDevice>;
 	using SdlGpuDeviceObPtr = utilities::ObPtr<SDL_GPUDevice>;
+	using SdlGpuDeviceBrPtr = utilities::BrPtr<SDL_GPUDevice>;
+
+	using GPUCommandBufferObPtr =  utilities::ObPtr<SDL_GPUCommandBuffer>;
+	using GPUCommandBufferBrPtr = utilities::BrPtr<SDL_GPUCommandBuffer>;
 
 
 }

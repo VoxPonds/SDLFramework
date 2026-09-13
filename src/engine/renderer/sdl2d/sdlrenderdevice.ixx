@@ -19,37 +19,40 @@ export namespace engine::render
 	        explicit SdlRenderDevice(SDL_Window& window_borrowed);
     		~SdlRenderDevice() = default;
 
-	        platform::SdlRendererDeviceObPtr getRendererPtr() const;
+	        platform::SdlRendererDeviceObPtr get() const;
 
 	        static RenderCapabilities getCapabilities();
     };
+}
 
-    SdlRenderDevice::SdlRenderDevice(SDL_Window& window_borrowed)
-	    : renderer_ptr(
-	    	SDL_CreateRenderer(&window_borrowed, nullptr)
-	    )
-    {
+namespace engine::render
+{
+	SdlRenderDevice::SdlRenderDevice(SDL_Window& window_borrowed)
+	: renderer_ptr(
+		SDL_CreateRenderer(&window_borrowed, nullptr)
+	)
+	{
 		//renderer_ptr = SdlRendererDevicePtr(SDL_CreateRenderer(&sdlwindow.getWindow(), nullptr), SDL_DestroyRenderer);
 		if (!renderer_ptr)
 		{
 			const auto error = std::string("Failed to create SDL renderer: ") + SDL_GetError();
 			throw std::runtime_error(SDL_GetError());
 		}
-    }
+	}
 
-    platform::SdlRendererDeviceObPtr SdlRenderDevice::getRendererPtr() const
-    {
+	platform::SdlRendererDeviceObPtr SdlRenderDevice::get() const
+	{
 		return renderer_ptr;
-    }
+	}
 
-    RenderCapabilities SdlRenderDevice::getCapabilities()
-    {
-    	return RenderCapabilities{
-    		.supports_3d = false,
-    		.supports_compute = false,
-    		.supports_msaa = false,
-    		.supports_bindless = false,
-    		.supports_texture_compression = false,
-    	};
-    }
+	RenderCapabilities SdlRenderDevice::getCapabilities()
+	{
+		return RenderCapabilities{
+			.supports_3d = false,
+			.supports_compute = false,
+			.supports_msaa = false,
+			.supports_bindless = false,
+			.supports_texture_compression = false,
+		};
+	}
 }

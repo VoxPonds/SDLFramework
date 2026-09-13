@@ -5,6 +5,7 @@ export module engine.core.runtime;
 
 import engine.core.timer;
 import engine.core.eventdispatcher;
+import engine.platform.sdlplatform;
 import engine.platform.sdlwindow;
 import engine.platform.sdlptr;
 import engine.render.sdlrenderdevice;
@@ -30,7 +31,8 @@ export namespace engine::core
 	class Runtime final
 	{
 		private:
-			platform::SdlWindow window_manager_;
+			platform::SdlPlatform platform_;
+			platform::SdlWindow window_;
 			resource::ResourceManager resource_manager_;
 			render::RendererService renderer_service_;
 			EventDispatcher dispatcher_;
@@ -43,15 +45,15 @@ export namespace engine::core
 				return running_;
 			}
 
-			Runtime();
-			static Runtime& instance()
+			Runtime(render::ERenderBackend backend);
+			static Runtime& instance(render::ERenderBackend backend)
 			{
-				static Runtime runtime;
+				static Runtime runtime{backend};
 				return runtime;
 			}
 			~Runtime()=default;
 
-			void test()const;
+			void test();
 			void init();
 			void beginFrame();
 			void iterate();
@@ -61,14 +63,15 @@ export namespace engine::core
 			
 			const resource::ResourceManager& ResourceManager()const;
 			const render::RendererService& RendererService()const;
-			std::expected<void, render::RendererError> run();
+			std::expected<void, render::ERendererError> run();
 	};
 
 	template<typename App> requires AppFunc<App>
-	Runtime<App>::Runtime() :
-		window_manager_{},
+	Runtime<App>::Runtime(render::ERenderBackend backend) :
+		platform_{},
+		window_{},
 		resource_manager_{},
-		renderer_service_(render::ERenderBackend::SDL_RENDERER, window_manager_.getWindowRef(), resource_manager_),
+		renderer_service_(backend, window_.getRef(), resource_manager_),
 		app_(resource_manager_, renderer_service_.frameRecorder()),
 		running_(true)
 	{
@@ -76,13 +79,16 @@ export namespace engine::core
 	}
 
 	template<typename App> requires AppFunc<App>
-	void Runtime<App>::test() const
+	void Runtime<App>::test()
 	{
-		//renderer_.renderTest();
+		if (const auto result = renderer_service_.testSdlGpu(); !result)
+		{
+			running_ = false;
+		}
 	}
 
 	template<typename App> requires AppFunc<App>
-	std::expected<void, render::RendererError> Runtime<App>::run()
+	std::expected<void, render::ERendererError> Runtime<App>::run()
 	{
 		Timer::beginFrame();
 		renderer_service_.beginFrame();
@@ -122,14 +128,14 @@ export namespace engine::core
 	void Runtime<App>::iterate()
 	{
 		app_.update();
-		if (auto result = app_.draw(); !result) return;
+		app_.draw();
+		//if (auto result = app_.draw(); !result) return;
 		if (!renderer_service_.run()) return;
 	}
 
 	template<typename App> requires AppFunc<App>
 	void Runtime<App>::processEvent(const SDL_Event* event)
 	{
-		//std::println("running:{}", isRunning());
 		if (!event)
 		{
 			SDL_Event polled_event;
@@ -143,7 +149,8 @@ export namespace engine::core
 			return;
 		}
 		if (event->type == SDL_EVENT_QUIT) running_ = false;
-
+		if (const auto result = platform::translateSDLEvent(*event))
+		app_.processEvent(result.value());
 		// if (event)
 		// {
 		// 	if (event->type == SDL_EVENT_QUIT)

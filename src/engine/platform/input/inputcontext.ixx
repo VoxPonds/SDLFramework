@@ -1,9 +1,9 @@
 module;
-#include "SDL3/SDL_scancode.h"
 
 export module engine.platform.inputsystem:inputcontext;
-import std.compat;
 import :inputmapping;
+import std.compat;
+import engine.platform.inputcode;
 
 export namespace engine::platform
 {
@@ -18,15 +18,15 @@ export namespace engine::platform
 	{
 		std::string name;
 
-		std::unordered_map<StandardAction, ActionProfile> actionMapping
+		InputMappingList<StandardAction> test_action_mapping
 		{
 			{
 				StandardAction::ACTION_FORWARD,
-				{
-					{//profile 
-						{//list
+				{//profile
+					{//list
+						{
 							{//seq
-								{SDL_SCANCODE_W, TriggerType::TRIGGER_DOWN},
+								{EInputCode::KEY_W, TriggerType::TRIGGER_DOWN},
 							}
 						},
 					}, ActionMode::MODE_HOLD
@@ -38,7 +38,7 @@ export namespace engine::platform
 					{//profile 
 						{//list
 							{//seq
-								{SDL_SCANCODE_S, TriggerType::TRIGGER_DOWN},
+								{EInputCode::KEY_S, TriggerType::TRIGGER_DOWN},
 							}
 						},
 					}, ActionMode::MODE_HOLD
@@ -50,7 +50,7 @@ export namespace engine::platform
 					{//profile 
 						{//list
 							{//seq
-								{SDL_SCANCODE_A, TriggerType::TRIGGER_DOWN},
+								{EInputCode::KEY_A, TriggerType::TRIGGER_DOWN},
 							}
 						},
 					}, ActionMode::MODE_HOLD
@@ -62,7 +62,7 @@ export namespace engine::platform
 					{//profile 
 						{//list
 							{//seq
-								{SDL_SCANCODE_D, TriggerType::TRIGGER_DOWN},
+								{EInputCode::KEY_D, TriggerType::TRIGGER_DOWN},
 							}
 						},
 					}, ActionMode::MODE_HOLD
@@ -74,7 +74,7 @@ export namespace engine::platform
 					{//profile 
 						{//list
 							{//seq
-								{SDL_SCANCODE_LSHIFT, TriggerType::TRIGGER_PRESSED},
+								{EInputCode::KEY_LSHIFT, TriggerType::TRIGGER_PRESSED},
 							}
 						},
 					}, ActionMode::MODE_TOGGLE
@@ -86,10 +86,10 @@ export namespace engine::platform
 					{//profile 
 						{//list
 							{{//seq
-								{SDL_SCANCODE_SPACE, TriggerType::TRIGGER_DOWN},
+								{EInputCode::KEY_SPACE, TriggerType::TRIGGER_DOWN},
 							},},
 							{{
-								{SDL_SCANCODE_UNKNOWN, TriggerType::TRIGGER_PRESSED}
+								{EInputCode::KEY_UNKNOWN, TriggerType::TRIGGER_PRESSED}
 							},}
 						},
 					}, ActionMode::MODE_HOLD
@@ -101,7 +101,7 @@ export namespace engine::platform
 					{//profile 
 						{//list
 							{//seq
-								{SDL_SCANCODE_C, TriggerType::TRIGGER_PRESSED},
+								{EInputCode::KEY_C, TriggerType::TRIGGER_PRESSED},
 							}
 						},
 					}, ActionMode::MODE_TOGGLE

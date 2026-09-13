@@ -15,6 +15,7 @@
 
 #ifdef FROTH_DELEGATE_FRAMEWORK_MODE
     import engine.core.runtime;
+    import engine.render.rendertypes;
     /*#ifndef FROTH_APP
         #error "FROTH_APP must be defined before including <froth/entry.h>"
     #endif
@@ -50,7 +51,7 @@
         }*/
 
     #define FROTH_RUN_APP(AppType)\
-        inline auto& runtime = engine::core::Runtime<AppType>::instance();\
+        inline auto& runtime = engine::core::Runtime<AppType>::instance(engine::render::ERenderBackend::SDL_RENDERER);\
         inline SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])\
         {\
             runtime.init();\
@@ -65,6 +66,7 @@
         {\
             runtime.beginFrame();\
             runtime.iterate();\
+            runtime.endFrame();\
             return SDL_APP_CONTINUE;\
         }\
         inline void SDL_AppQuit(void* appstate, SDL_AppResult result)\

@@ -14,7 +14,5 @@ export namespace engine::render
 		public:
 			RenderContext() = default;
 			utilities::ObPtr<FrameRecorder> frameRecorder() noexcept;
-
 	};
-
 }
