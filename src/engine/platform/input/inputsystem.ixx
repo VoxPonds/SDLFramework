@@ -1,10 +1,11 @@
 module;
-
+#include "spdlog/spdlog.h"
 export module engine.platform.inputsystem;
 export import :inputmapping;
 export import :inputcontext;
 import engine.core.timer;
 import engine.core.eventtype;
+
 
 export namespace engine::platform
 {
@@ -20,6 +21,7 @@ export namespace engine::platform
 	        std::bitset<static_cast<std::size_t>(EInputCode::KEY_COUNT)> pressed_keys_;
 			std::bitset<static_cast<std::size_t>(EInputCode::KEY_COUNT)> down_keys_;
 	        std::bitset<static_cast<std::size_t>(EInputCode::KEY_COUNT)> released_keys_;
+			std::vector<core::KeyboardEvent> keyboard_events_;
 
 			std::span<const bool> keyboard_state_{};
 	        int keyboard_count_{};
@@ -44,7 +46,9 @@ export namespace engine::platform
 
 	        void processEvent(const core::Event& event);
 
-	        bool getActionEvent(ActionType action);
+	        static TriggerType getTriggerType(const core::KeyboardEvent& event);
+
+	        bool getActionEvent(ActionType action)const;
 
 			bool checkKeyDown(EInputCode key) const;
 
@@ -52,7 +56,7 @@ export namespace engine::platform
 
 	        bool checkKeyReleased(EInputCode key)const;
 
-	        bool matchSequence(InputSequence& pattern)const;
+	        bool matchSequence(const InputSequence& pattern)const;
 
 	        bool checkTrigger(EInputCode key) const;
 
@@ -81,14 +85,17 @@ export namespace engine::platform
 		pressed_keys_.reset();
 		released_keys_.reset();
 		down_keys_.reset();
+		keyboard_events_.clear();
 		//keyboard_state_ = { SDL_GetKeyboardState(&keyboard_count_), static_cast<size_t>(keyboard_count_) };
 	}
 
 	template<typename ActionType>
     void InputSystem<ActionType>::processEvent(const core::Event& event)
     {
+		if (std::holds_alternative<core::KeyboardEvent>(event))
 		if (const auto* key = std::get_if<core::KeyboardEvent>(&event))
 		{
+			keyboard_events_.emplace_back(*key);
 			switch (key->type)
 			{
 				case core::EEventType::EVENT_KEY_DOWN:
@@ -115,7 +122,29 @@ export namespace engine::platform
     }
 
 	template<typename ActionType>
-    bool InputSystem<ActionType>::getActionEvent(ActionType action)
+	TriggerType InputSystem<ActionType>::getTriggerType(const core::KeyboardEvent& event)
+	{
+		switch (event.type)
+		{
+			case core::EEventType::EVENT_KEY_DOWN:
+			{
+				if (event.down)
+				{
+					return TriggerType::TRIGGER_DOWN;
+				}
+				if (event.pressed)
+				{
+					return TriggerType::TRIGGER_PRESSED;
+				}
+				std::unreachable();
+			}
+			case core::EEventType::EVENT_KEY_UP : return TriggerType::TRIGGER_RELEASED;
+			default: std::unreachable();
+		}
+	}
+
+	template<typename ActionType>
+    bool InputSystem<ActionType>::getActionEvent(ActionType action)const
     {
     	auto it = action_mapping_.find(action);
     	if (it == action_mapping_.end()) return false;
@@ -186,42 +215,55 @@ export namespace engine::platform
     }
 
 	template<typename ActionType>
-    bool InputSystem<ActionType>::matchSequence(InputSequence& pattern)const
+    bool InputSystem<ActionType>::matchSequence(const InputSequence& pattern)const
     {
 	    if (pattern.sequence_.empty()) return false;
 		if (pattern.sequenceIndex >= pattern.sequence_.size()) pattern.sequenceIndex = 0;
-	    size_t index = pattern.sequenceIndex;
-		EInputCode needKey = pattern.sequence_[index].key;
-
-	    if (checkKeyPressed(needKey))
-	    {
-			std::uint64_t now = core::Timer::getTicks();
-	    	if (!pattern.lastTriggerTime)
-	    	{
-	    		pattern.lastTriggerTime = now;
-	    	}
-			std::uint64_t diff = now - pattern.lastTriggerTime.value();
-		    if (diff > pattern.tolerance_ms_)
-		    {
-			    index = 0;
-			    pattern.sequenceIndex = 0;//delete to avoid multiple reset
-		    }
-		    if (index == 0 || diff <= pattern.tolerance_ms_)
-		    {
-			    //std::cout << std::format("index:{}\n", pattern.sequenceIndex);
-			    pattern.lastTriggerTime = now;
-			    pattern.sequenceIndex++;
-			    if (pattern.sequenceIndex == pattern.sequence_.size())
-			    {
-				    pattern.sequenceIndex = 0;
-				    return true;
-			    }
-		    }
-		    else
-		    {
-			    pattern.sequenceIndex = 0;
-		    }
-	    }
+		/*spdlog::info("---- frame ----");*/
+		for (const auto& event : keyboard_events_)
+		{
+			/*spdlog::info("event key={}, trigger={}, index={}, expected key={}, expected trigger={}",
+				static_cast<int>(event.scancode),
+				static_cast<int>(getTriggerType(event)),
+			pattern.sequenceIndex,
+				static_cast<int>(pattern.sequence_[pattern.sequenceIndex].key),
+				static_cast<int>(pattern.sequence_[pattern.sequenceIndex].triggerType)
+			);*/
+			if (event.type != core::EEventType::EVENT_KEY_DOWN)
+				continue;
+			if (event.down)
+				continue;
+			const auto now = core::Timer::getTicks();
+			// timeout
+			if (pattern.lastTriggerTime && now - pattern.lastTriggerTime.value() > pattern.tolerance_ms_)
+			{
+				pattern.sequenceIndex = 0;
+				pattern.lastTriggerTime.reset();
+			}
+			const auto&[key, triggerType] = pattern.sequence_[pattern.sequenceIndex];
+			if (event.scancode != key)
+			{
+				// not expected
+				pattern.sequenceIndex = 0;
+				pattern.lastTriggerTime.reset();
+				continue;
+			}
+			/*if (getTriggerType(event) != triggerType)
+			{
+				// ignore this event
+				continue;
+			}*/
+			// success
+			pattern.lastTriggerTime = now;
+			++pattern.sequenceIndex;
+			// finish
+			if (pattern.sequenceIndex == pattern.sequence_.size())
+			{
+				pattern.sequenceIndex = 0;
+				pattern.lastTriggerTime.reset();
+				return true;
+			}
+		}
 	    return false;
     }
 

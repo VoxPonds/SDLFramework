@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 	{
 		runtime.beginFrame();
 
-		runtime.processEvent();
+		runtime.processEvents();
 
 		runtime.iterate();
 

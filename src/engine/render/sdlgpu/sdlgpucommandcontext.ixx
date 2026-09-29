@@ -28,6 +28,8 @@ export namespace engine::render
         COMMAND_SUBMISSION_FAILED,
         PRESENTATION_FAILED,
         INVALID_OPERATION,
+        INVALID_FRAME_STATE,
+        ACQUIRE_SWAPCHAIN_TEXTURE_FAILED,
     };
 
     class SdlGpuCommandContext

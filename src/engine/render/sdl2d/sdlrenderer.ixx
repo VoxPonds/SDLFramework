@@ -38,9 +38,9 @@ export namespace engine::render
 			SdlRenderer(SdlRenderer&&) = delete;
 			SdlRenderer& operator=(SdlRenderer&&) = delete;
 
-			void renderTest()const;
 			auto render(const FrameData& data)-> std::expected<void, ERendererError>;
 
+			void drawRect(const Camera2D& camera, const DrawRect2DCommand& command) const;
 			void drawTexture(const Camera2D& camera, const SpriteRenderCommand& command);
 			void drawTexture(const SpriteRenderCommand& command);
 
@@ -52,6 +52,8 @@ export namespace engine::render
 			auto execute(const Camera& camera, const RenderCommand2D& render_command_2d) -> std::expected<void, ERendererError>;
 			void present();
 			void endFrame();
+
+			void renderTest()const;
 			
 	};
 

@@ -1,12 +1,14 @@
 module;
+#include <initializer_list>
 
 export module engine.platform.inputsystem:inputmapping;
 import engine.platform.inputcode;
-import std.compat;
+import std;
+
 
 export namespace engine::platform
 {
-    enum class StandardAction : uint8_t
+    enum class StandardAction : std::uint8_t
     {
         ACTION_FORWARD,
         ACTION_LEFT,
@@ -19,7 +21,7 @@ export namespace engine::platform
         ACTION_INTERACT,
     };
 
-    enum class TriggerType : uint8_t
+    enum class TriggerType : std::uint8_t
     {
         TRIGGER_PRESSED,
         TRIGGER_DOWN,
@@ -28,20 +30,19 @@ export namespace engine::platform
         TRIGGER_CHORD,
     };
 
-    enum ActionMode : uint8_t
+    enum ActionMode : std::uint8_t
     {
         MODE_HOLD,
         MODE_TOGGLE
     };
 
-    enum class InputDeviceType : uint8_t
+    enum class InputDeviceType : std::uint8_t
     {
         DEVICE_PC,
         DEVICE_GAMEPAD,
         DEVICE_MOBILE,
         DEVICE_COUNT,
     };
-
 
     struct SingleInputBind
     {
@@ -53,15 +54,31 @@ export namespace engine::platform
     {
         std::vector<SingleInputBind> sequence_;//x.+x. or x.+y.
         std::uint64_t tolerance_ms_ { 250 };
-        std::optional<std::uint64_t> lastTriggerTime{ -tolerance_ms_ };
-        std::size_t sequenceIndex{ 0 };
+        mutable std::optional<std::uint64_t> lastTriggerTime{ std::nullopt };
+        mutable std::size_t sequenceIndex{ 0 };
 
+        InputSequence(const SingleInputBind bind)
+            : sequence_{bind}
+        {
+        }
+        InputSequence(const std::initializer_list<SingleInputBind> binds):
+            sequence_(binds)
+        {
+        }
     };
 
+    struct InputSequenceState
+    {
+        std::optional<std::uint64_t> lastTriggerTime{};
+        std::size_t sequenceIndex{0};
+    };
+
+    using InputAlternative = std::vector<InputSequence>;
     struct ActionProfile
     {
-        std::vector<InputSequence> mapping_lists_;//x.+x. or x.+y- || a.+a.
-        ActionMode actionMode{ActionMode::MODE_HOLD};
+        InputAlternative mapping_lists_;//x.+x. or x.+y- || a.+a.
+        ActionMode actionMode{MODE_HOLD};
+
     };
 
     template<typename Action>
@@ -90,39 +107,71 @@ export namespace engine::platform
     {
         constexpr auto makeBind(const EInputCode key, const TriggerType trigger) -> SingleInputBind
         {
-            return
-            SingleInputBind{
-                .key = key,
-                .triggerType = trigger
-            };
-        }
-        constexpr auto makeSingleSequence(const EInputCode input, const TriggerType trigger = TriggerType::TRIGGER_PRESSED) -> InputSequence
-        {
-            return InputSequence{
-                .sequence_ = {
-                    makeBind(input, trigger)
-                }
-            };
-        }
-        constexpr auto makeSequence(const std::initializer_list<SingleInputBind> inputs) -> InputSequence
-        {
-            return InputSequence{
-                .sequence_ = inputs
+            return{
+                .key {key},
+                .triggerType {trigger}
             };
         }
 
-        constexpr auto pressed(const EInputCode input) -> InputSequence
+        constexpr auto makeSingleSequence(const EInputCode input, const TriggerType trigger = TriggerType::TRIGGER_PRESSED) -> InputSequence
         {
-            return makeSingleSequence(input, TriggerType::TRIGGER_PRESSED);
+            return {makeBind(input, trigger)};
         }
-        constexpr auto down(const EInputCode input) -> InputSequence
+
+        constexpr auto makeSequence(const std::initializer_list<SingleInputBind> inputs) -> InputSequence
         {
-            return makeSingleSequence(input, TriggerType::TRIGGER_DOWN);
+            return {inputs};
         }
-        constexpr auto released(const EInputCode input) -> InputSequence
+
+        constexpr auto pressed(const EInputCode input) -> SingleInputBind
         {
-            return makeSingleSequence(input, TriggerType::TRIGGER_RELEASED);
+            return makeBind(input, TriggerType::TRIGGER_PRESSED);
         }
+
+        constexpr auto down(const EInputCode input) -> SingleInputBind
+        {
+            return makeBind(input, TriggerType::TRIGGER_DOWN);
+        }
+
+        constexpr auto released(const EInputCode input) -> SingleInputBind
+        {
+            return makeBind(input, TriggerType::TRIGGER_RELEASED);
+        }
+
+        constexpr auto operator>>(const SingleInputBind lhs, const SingleInputBind rhs) -> InputSequence
+        {
+            return { lhs, rhs };
+        }
+
+        constexpr auto operator|(const SingleInputBind lhs, const SingleInputBind rhs) -> InputAlternative
+        {
+            return { InputSequence{lhs}, InputSequence{rhs} };
+        }
+
+        constexpr auto operator|(const InputSequence& lhs, const SingleInputBind rhs) -> InputAlternative
+        {
+            return { InputSequence{lhs}, InputSequence{rhs} };
+        }
+
+        constexpr auto operator|(InputAlternative&& lhs, const SingleInputBind rhs) -> InputAlternative
+        {
+            lhs.emplace_back(InputSequence{rhs});
+            return lhs;
+        }
+
+        constexpr auto operator|(InputAlternative&& lhs, const InputSequence rhs) -> InputAlternative
+        {
+            lhs.emplace_back(rhs);
+            return lhs;
+        }
+
+        constexpr auto operator|(const InputSequence& lhs, const InputSequence& rhs) -> InputAlternative
+        {
+            return { InputSequence{lhs}, InputSequence{rhs} };
+        }
+
+
+
     }
 
 

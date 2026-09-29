@@ -10,16 +10,9 @@ import std;
 
 export namespace engine::resource
 {
-	template<typename Resource>
-	struct ResourceSlot
-	{
-		ResourcePtr<Resource> resource_ptr;
-		std::uint32_t generation = 0;
-	};
-
 	template<typename Key, typename Resource, typename Loader>
 	concept ResourceLoader =
-		requires(Loader & loader, const Key & key)
+		requires(const Loader& loader, const Key& key)
 		{
 			{ loader(key) } -> std::same_as<ResourcePtr<Resource>>;
 		};
@@ -30,6 +23,13 @@ export namespace engine::resource
 			Key,
 			typename ResourceTraits<Resource>::Key
 		>;
+
+	template<typename Resource>
+		struct ResourceSlot
+	{
+		ResourcePtr<Resource> resource_ptr;
+		std::uint32_t generation {0};
+	};
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>
 	class ResourceCache
@@ -127,7 +127,7 @@ export namespace engine::resource
 
 		if (slot.generation != handle.getGeneration()) return std::unexpected(EResourceError::STALE_HANDLE);
 
-		return slot.resource_ptr.get();
+		return utilities::observe(slot.resource_ptr.get());
 	}
 
 	template<typename Key, typename Resource> requires MappingCheck<Key, Resource>

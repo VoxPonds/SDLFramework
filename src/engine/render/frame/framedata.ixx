@@ -2,6 +2,7 @@ module;
 
 export module engine.render.framedata;
 import engine.render.sprite;
+import engine.render.mesh;
 import engine.render.rendercommandqueue;
 import engine.render.camera;
 import engine.render.rendertypes;
@@ -15,25 +16,26 @@ export namespace engine::render
         const Sprite sprite;
         core::Transform2D transform_2d;
         FlipMode flip_mode;
-        ERenderPass pass{ERenderPass::SPRITE_WORLD};
+        //ERenderPass pass{ERenderPass::SPRITE_WORLD};
     };
 
-    struct DrawRect2D
+    struct DrawRect2DCommand
     {
-        core::FrothRect rect;
-        core::FrothColor color;
+        core::BaseRect rect;
+        core::BaseColor color;
         bool filled;
     };
 
     struct PrimitiveCommand2D
     {
-        std::variant<DrawRect2D> primitive_2D;
+        std::variant<DrawRect2DCommand> primitive_2D;
         core::Transform2D transform_2d;
     };
 
     struct MeshRenderCommand
     {
-
+        MeshData mesh;
+        core::Transform3D transform_3d;
     };
 
     using RenderCommand2D = std::variant<
@@ -43,7 +45,7 @@ export namespace engine::render
     >;
 
 
-    using RenderCommand3D = std::variant <
+    using RenderCommand3D = std::variant<
         MeshRenderCommand,
         std::monostate
     >;

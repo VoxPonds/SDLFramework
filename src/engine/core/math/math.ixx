@@ -28,13 +28,13 @@ export namespace engine::core
     using glm::perspective;
     using glm::ortho;
 
-    struct FrothRect
+    struct BaseRect
     {
-        Vector2 position;
-        Vector2 size;
+        Vector2 position{};
+        Vector2 size{};
     };
 
-    struct FrothColor
+    struct BaseColor
     {
         float r{};
         float g{};

@@ -21,15 +21,15 @@ export namespace engine::render
 			std::expected<resource::SdlTexturePtr, ERendererError> translate(resource::ImageObPtr image);
 
 		public:
-			SdlRendererAdapter(platform::SdlRendererDeviceObPtr renderer);
+			SdlRendererAdapter(platform::SdlRendererDeviceBrPtr renderer);
             std::expected<resource::SdlTexturePtr, ERendererError> loadTexture(resource::ImageObPtr image);
 	};
 }
 
 namespace engine::render
 {
-	SdlRendererAdapter::SdlRendererAdapter(platform::SdlRendererDeviceObPtr renderer):
-	renderer_(renderer)
+	SdlRendererAdapter::SdlRendererAdapter(const platform::SdlRendererDeviceBrPtr renderer):
+	renderer_(renderer.get())
 	{
 	}
 

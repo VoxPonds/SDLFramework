@@ -56,7 +56,7 @@ namespace engine::resource
 			return std::unexpected(EResourceError::LOAD_FAILED);
 		}
 
-		return translate(surface);
+		return translate(SdlSurfaceObPtr(surface));
 	}
 
 	PixelFormat ImageAdapter::ConvertFormat(SDL_PixelFormat format)

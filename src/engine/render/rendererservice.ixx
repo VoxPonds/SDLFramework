@@ -1,8 +1,7 @@
 module;
 #include "SDL3/SDL_video.h"
-#include "spdlog/fmt/bundled/base.h"
 
-export module engine.renderer.rendererservice;
+export module engine.render.rendererservice;
 
 import engine.render.rendererbackend;
 import engine.render.sdlrenderdevice;
@@ -47,7 +46,7 @@ export namespace engine::render
 			void endFrame();
 	};
 
-	RendererService::RendererService(ERenderBackend type, SDL_Window& window_ref, resource::ResourceManager& manager_ref):
+	RendererService::RendererService(const ERenderBackend type, SDL_Window& window_ref, resource::ResourceManager& manager_ref):
 		renderer_device(createDevice(type, window_ref)),
 		renderer(generateBackend(manager_ref))
 	{

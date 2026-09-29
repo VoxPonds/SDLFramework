@@ -18,26 +18,6 @@ namespace engine::render
 
 	}
 
-	void SdlRenderer::renderTest() const
-	{
-		const char* message = "Hello World!";
-		int w = 0, h = 0;
-		constexpr float scale = 4.0f;
-		SDL_SetRenderLogicalPresentation(getRendererPtr().get(), 1280, 720, SDL_LOGICAL_PRESENTATION_LETTERBOX);
-		/* Center the message and scale it up */
-		SDL_GetRenderOutputSize(renderer_ptr.get(), &w, &h);
-		SDL_SetRenderScale(renderer_ptr.get(), scale, scale);
-		const float x = ((w / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * SDL_strlen(message)) / 2;
-		const float y = ((h / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE) / 2;
-
-		/* Draw the message */
-		SDL_SetRenderDrawColor(renderer_ptr.get(), 0, 0, 0, 255);
-		SDL_RenderClear(renderer_ptr.get());
-		SDL_SetRenderDrawColor(renderer_ptr.get(), 255, 255, 255, 255);
-		SDL_RenderDebugText(renderer_ptr.get(), x, y, message);
-		SDL_RenderPresent(renderer_ptr.get());
-	}
-
 	auto SdlRenderer::render(const FrameData& data)->std::expected<void, ERendererError>
 	{
 		auto t0 = std::chrono::steady_clock::now();
@@ -70,15 +50,51 @@ namespace engine::render
 		return {};
 	}
 
+	void SdlRenderer::drawRect(const Camera2D &camera, const DrawRect2DCommand &command) const
+	{
+    	const auto& [rect_pos, rect_size] = command.rect;
+    	const auto& [red, green, blue, alpha] = command.color;
+
+    	const SDL_FRect rect{
+    		.x = rect_pos.x,
+			.y = rect_pos.y,
+			.w = rect_size.x,
+			.h = rect_size.y,
+		};
+
+    	SDL_SetRenderDrawColorFloat(
+			renderer_ptr.get(),
+			red,
+			green,
+			blue,
+			alpha
+		);
+
+    	if (command.filled)
+    	{
+    		SDL_RenderFillRect(
+				renderer_ptr.get(),
+				&rect
+			);
+    	}
+    	else
+    	{
+    		SDL_RenderRect(
+				renderer_ptr.get(),
+				&rect
+			);
+    	}
+	}
+
 	void SdlRenderer::drawTexture(const Camera2D& camera, const SpriteRenderCommand& command)
 	{
-		auto image_handle = command.sprite.getImageHandle();
-		auto image = resource_manager_borrowed.getImage(image_handle);
+		const auto image_handle = command.sprite.getImageHandle();
+		const auto image = resource_manager_borrowed.getImage(image_handle);
 
 		auto texture_result = texture_manager.findTexture(image_handle);
 		if (!texture_result)
 		{
-			std::println("HandleError:{}",static_cast<int>(texture_result.error()));
+			std::println("HandleError:{}", std::to_underlying(texture_result.error()));
 			if (const auto load_result = texture_manager.loadTexture(image_handle); !load_result) {}
 			return;
 		}
@@ -87,18 +103,18 @@ namespace engine::render
 
 		if (!texture)
 		{
-			std::println("RendererError:{}", static_cast<int>(texture.error()));
+			std::println("RendererError:{}", std::to_underlying(texture.error()));
 			return;
 		}
 
 		const auto source_rect = command.sprite.getSourceRect();
-		const auto texture_size = resource_manager_borrowed.getImageSize(image.value().get());
+		const auto texture_size = resource_manager_borrowed.getImageSize(resource::ImageObPtr(image.value().get()));
 
-		utilities::ObPtr<SDL_FRect> src_rect;
+		const SDL_FRect* src_rect;
 
 		if (source_rect)
 		{
-			SDL_FRect temp_rect{
+			const SDL_FRect temp_rect{
 				.x = static_cast<float>(source_rect->position.x),
 				.y = static_cast<float>(source_rect->position.y),
 				.w = static_cast<float>(source_rect->size.x),
@@ -121,17 +137,8 @@ namespace engine::render
 			: texture_size.value();
 
 		const auto screen_position = camera.worldToScreen(command.transform_2d.position);
-		/*std::println(
-			"world=({}, {}) camera=({}, {}) screen=({}, {})",
-			command.transform_2d.position.x,
-			command.transform_2d.position.y,
-			camera.position.x,
-			camera.position.y,
-			screen_position.x,
-			screen_position.y
-		);*/
 
-		SDL_FRect temp_rect{
+		const SDL_FRect temp_rect{
 			.x = static_cast<float>(screen_position.x),
 			.y = static_cast<float>(screen_position.y),
 			.w = static_cast<float>(
@@ -142,16 +149,14 @@ namespace engine::render
 			)
 		};
 
-		utilities::ObPtr dst_rect = &temp_rect;
+		const SDL_FRect* dst_rect = &temp_rect;
 
-		const auto flip_mode = static_cast<SDL_FlipMode>(command.flip_mode);
-
-		if (!SDL_RenderTextureRotated
+		if (const auto flip_mode = static_cast<SDL_FlipMode>(command.flip_mode); !SDL_RenderTextureRotated
 			(
 				renderer_ptr.get(),
 				texture.value().get(),
-				src_rect.get(),
-				dst_rect.get(),
+				src_rect,
+				dst_rect,
 				command.transform_2d.rotation,
 				nullptr,
 				flip_mode
@@ -172,7 +177,7 @@ namespace engine::render
 		auto texture_result = texture_manager.findTexture(image_handle);
 		if (!texture_result)
 		{
-			std::println("HandleError:{}", static_cast<int>(texture_result.error()));
+			std::println("HandleError:{}", std::to_underlying(texture_result.error()));
 			if (const auto load_result = texture_manager.loadTexture(image_handle); !load_result)
 				return;
 		}
@@ -180,14 +185,14 @@ namespace engine::render
 
 		if (!texture)
 		{
-			std::println("RendererError:{}", static_cast<int>(texture.error()));
+			std::println("RendererError:{}", std::to_underlying(texture.error()));
 			return;
 		}
 
 		const auto source_rect = command.sprite.getSourceRect();
-		const auto textureSize = resource_manager_borrowed.getImageSize(image.value().get());
+		const auto textureSize = resource_manager_borrowed.getImageSize(resource::ImageObPtr(image.value().get()));
 
-		utilities::ObPtr<SDL_FRect> src_rect;
+		SDL_FRect *src_rect;
 
 		if (source_rect)
 		{
@@ -212,7 +217,7 @@ namespace engine::render
 			}
 			: textureSize.value();
 
-		utilities::ObPtr<SDL_FRect> dst_rect;
+		SDL_FRect *dst_rect;
 		SDL_FRect temp_rect{
 			.x = static_cast<float>(command.transform_2d.position.x),
 			.y = static_cast<float>(command.transform_2d.position.y),
@@ -226,8 +231,8 @@ namespace engine::render
 			(
 				renderer_ptr.get(),
 				texture.value().get(),
-				src_rect.get(),
-				dst_rect.get(),
+				src_rect,
+				dst_rect,
 				command.transform_2d.rotation,
 				nullptr,
 				flip_mode
@@ -251,29 +256,38 @@ namespace engine::render
 
 	void SdlRenderer::clear()
 	{
-		//SDL_SetRenderDrawColor(
-		//	renderer_ptr.get(),
-		//	0,
-		//	0,
-		//	0,
-		//	255
-		//);
+		SDL_SetRenderDrawColor(
+			renderer_ptr.get(),
+			0,
+			0,
+			0,
+			255
+		);
 		SDL_RenderClear(renderer_ptr.get());
 	}
 
 	auto SdlRenderer::execute(const Camera& camera, const RenderCommand2D& render_command_2d) -> std::expected<void, ERendererError>
 	{
-    	const auto camera_2d = std::get_if<Camera2D>(&camera);
-    	if (!camera_2d)
+    	if (!std::holds_alternative<Camera2D>(camera))
     	{
     		return std::unexpected(ERendererError::INVALID_CAMERA);
     	}
+    	const auto& camera_2d = std::get<Camera2D>(camera);
+
 		std::visit(
-			[&]<typename T>(T&& command_)
+		[&]<typename T>(T&& command_) -> void
 			{
-				if constexpr (std::is_same_v<std::remove_cvref_t<T>, SpriteRenderCommand>)
+    			using DT = std::remove_cvref_t<T>;
+				if constexpr (std::is_same_v<DT, SpriteRenderCommand>)
 				{
-					drawTexture(*camera_2d, command_);
+					drawTexture(camera_2d, std::forward<T>(command_));
+				}
+				else if constexpr (std::is_same_v<DT, PrimitiveCommand2D>)
+				{
+					if(const auto rect_command = std::get_if<DrawRect2DCommand>(&command_.primitive_2D); rect_command)
+					{
+						drawRect(camera_2d, *rect_command);
+					}
 				}
 			},
 			render_command_2d
@@ -289,4 +303,24 @@ namespace engine::render
 	void SdlRenderer::endFrame()
 	{
 	}
+
+	void SdlRenderer::renderTest() const
+    {
+    	constexpr auto message = "Hello World!";
+    	int w = 0, h = 0;
+    	constexpr float scale = 4.0f;
+    	SDL_SetRenderLogicalPresentation(getRendererPtr().get(), 1280, 720, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    	/* Center the message and scale it up */
+    	SDL_GetRenderOutputSize(renderer_ptr.get(), &w, &h);
+    	SDL_SetRenderScale(renderer_ptr.get(), scale, scale);
+    	const float x = (w / scale - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * SDL_strlen(message)) / 2;
+    	const float y = (h / scale - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE) / 2;
+
+    	/* Draw the message */
+    	SDL_SetRenderDrawColor(renderer_ptr.get(), 0, 0, 0, 255);
+    	SDL_RenderClear(renderer_ptr.get());
+    	SDL_SetRenderDrawColor(renderer_ptr.get(), 255, 255, 255, 255);
+    	SDL_RenderDebugText(renderer_ptr.get(), x, y, message);
+    	SDL_RenderPresent(renderer_ptr.get());
+    }
 }

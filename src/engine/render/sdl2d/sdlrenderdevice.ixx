@@ -42,7 +42,7 @@ namespace engine::render
 
 	platform::SdlRendererDeviceObPtr SdlRenderDevice::get() const
 	{
-		return renderer_ptr;
+		return platform::SdlRendererDeviceObPtr(renderer_ptr);
 	}
 
 	RenderCapabilities SdlRenderDevice::getCapabilities()

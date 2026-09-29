@@ -15,6 +15,15 @@ export namespace engine::resource
 	template<typename T>
 	using ResourcePtr = std::unique_ptr<T, typename ResourceTraits<T>::Deleter>;
 
+	template<typename T>
+	struct GetElementType;
+
+	template<typename T>
+	struct GetElementType<ResourcePtr<T>>
+	{
+		using element_type = T;
+	};
+
 	template<typename T, typename... Args>
 	ResourcePtr<T> makeOwnRs(Args&&... args)
 	{

@@ -1,5 +1,5 @@
 ﻿message(STATUS "The CMAKE_VERSION is ${CMAKE_VERSION}.")
-cmake_minimum_required(VERSION 4.2.0)
+cmake_minimum_required(VERSION 4.4.2)
 
 include(cmake/ProjectConfig.cmake)
 project (SDLFramework LANGUAGES C CXX VERSION 0.0.1)

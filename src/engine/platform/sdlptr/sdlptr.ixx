@@ -52,6 +52,7 @@ export namespace engine::platform
 
 	using SdlRendererDevicePtr = SdlPtr<SDL_Renderer>;
 	using SdlRendererDeviceObPtr = utilities::ObPtr<SDL_Renderer>;
+	using SdlRendererDeviceBrPtr = utilities::BrPtr<SDL_Renderer>;
 
 	using WindowPtr = SdlPtr<SDL_Window>;
 	using WindowObPtr = utilities::ObPtr<SDL_Window>;

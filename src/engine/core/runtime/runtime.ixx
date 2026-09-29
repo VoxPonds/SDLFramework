@@ -1,32 +1,45 @@
 module;
-#include "SDL3/SDL_events.h"
 
 export module engine.core.runtime;
 
 import engine.core.timer;
+import engine.core.appconfig;
 import engine.core.eventdispatcher;
+import engine.core.eventtype;
 import engine.platform.sdlplatform;
 import engine.platform.sdlwindow;
 import engine.platform.sdlptr;
 import engine.render.sdlrenderdevice;
 import engine.render.sdlrenderer;
-import engine.renderer.rendererservice;
+import engine.render.rendererservice;
 import engine.render.rendererbackend;
-import engine.resource.resourcemanager;
 import engine.render.framerecorder;
 import engine.render.rendertypes;
+import engine.resource.resourcemanager;
 import engine.utilities;
 import std;
 
 export namespace engine::core
 {
 	template<typename App>
-	concept AppFunc = 
-		requires(App& app)
-		{
-			app.init(), app.update(), app.draw();
-		};
-	
+	concept AppInit = std::invocable<decltype(&App::init), App>;
+
+	template<typename App>
+	concept AppUpdate = std::invocable<decltype(&App::update), App>;;
+
+	template<typename App>
+	concept AppDraw =  std::invocable<decltype(&App::draw), App>;
+
+	template<typename App>
+	concept AppFunc = AppInit<App> && AppUpdate<App> && AppDraw<App>;
+
+	template<typename  App>
+	concept HasProcessEvent =
+	requires(Event&& event)
+	{
+		std::invoke(&App::processEvent, std::declval<App>(), std::forward<Event>(event));
+	};
+
 	template<typename App> requires AppFunc<App>
 	class Runtime final
 	{
@@ -40,15 +53,20 @@ export namespace engine::core
 			bool running_;
 
 		public:
-			bool isRunning() const
+			bool isRunning() const noexcept
 			{
 				return running_;
 			}
 
-			Runtime(render::ERenderBackend backend);
-			static Runtime& instance(render::ERenderBackend backend)
+			explicit operator bool() const noexcept
 			{
-				static Runtime runtime{backend};
+				return running_;
+			}
+
+			Runtime(render::ERenderBackend backend, const AppConfig& config);
+			static Runtime& instance(render::ERenderBackend backend, const AppConfig& config = froth_default_app_config)
+			{
+				static Runtime runtime{backend, config};
 				return runtime;
 			}
 			~Runtime()=default;
@@ -57,19 +75,18 @@ export namespace engine::core
 			void init();
 			void beginFrame();
 			void iterate();
-			void processEvent(const SDL_Event* event = nullptr);
+			void processEvent(const Event& event);
+			void processEvents();
 			void endFrame();
 			void quit();
-			
-			const resource::ResourceManager& ResourceManager()const;
-			const render::RendererService& RendererService()const;
-			std::expected<void, render::ERendererError> run();
+
+			auto run() -> std::expected<void, render::ERendererError>;
 	};
 
 	template<typename App> requires AppFunc<App>
-	Runtime<App>::Runtime(render::ERenderBackend backend) :
+	Runtime<App>::Runtime(const render::ERenderBackend backend, const AppConfig& config) :
 		platform_{},
-		window_{},
+		window_{config.window_config_},
 		resource_manager_{},
 		renderer_service_(backend, window_.getRef(), resource_manager_),
 		app_(resource_manager_, renderer_service_.frameRecorder()),
@@ -88,7 +105,7 @@ export namespace engine::core
 	}
 
 	template<typename App> requires AppFunc<App>
-	std::expected<void, render::ERendererError> Runtime<App>::run()
+	auto Runtime<App>::run() -> std::expected<void, render::ERendererError>
 	{
 		Timer::beginFrame();
 		renderer_service_.beginFrame();
@@ -100,21 +117,9 @@ export namespace engine::core
 	}
 
 	template<typename App> requires AppFunc<App>
-	const resource::ResourceManager& Runtime<App>::ResourceManager()const
-	{
-		return resource_manager_;
-	}
-
-	template<typename App> requires AppFunc<App>
-	const render::RendererService& Runtime<App>::RendererService()const
-	{
-		return renderer_service_;
-	}
-
-	template<typename App> requires AppFunc<App>
 	void Runtime<App>::init()
 	{
-		app_.init();
+		std::invoke_r<void>(&App::init, app_);
 	}
 
 	template<typename App> requires AppFunc<App>
@@ -127,43 +132,26 @@ export namespace engine::core
 	template<typename App> requires AppFunc<App>
 	void Runtime<App>::iterate()
 	{
-		app_.update();
-		app_.draw();
-		//if (auto result = app_.draw(); !result) return;
+		std::invoke_r<void>(&App::update, app_);
+		std::invoke_r<void>(&App::draw, app_);
+
 		if (!renderer_service_.run()) return;
 	}
 
 	template<typename App> requires AppFunc<App>
-	void Runtime<App>::processEvent(const SDL_Event* event)
+	void Runtime<App>::processEvent(const Event& event)
 	{
-		if (!event)
+		if (std::holds_alternative<QuitEvent>(event)) running_ = false;
+		if constexpr (HasProcessEvent<App>) std::invoke_r<void>(&App::processEvent, app_, event);
+	}
+
+	template<typename App> requires AppFunc<App>
+	void Runtime<App>::processEvents()
+	{
+		while (auto event = platform_.pollEvent())
 		{
-			SDL_Event polled_event;
-			while (SDL_PollEvent(&polled_event))
-			{
-				if (polled_event.type == SDL_EVENT_QUIT)
-				{
-					running_ = false;
-				}
-			}
-			return;
+			processEvent(*event);
 		}
-		if (event->type == SDL_EVENT_QUIT) running_ = false;
-		if (const auto result = platform::translateSDLEvent(*event))
-		app_.processEvent(result.value());
-		// if (event)
-		// {
-		// 	if (event->type == SDL_EVENT_QUIT)
-		// 		running_ = false;
-
-		// 	return;
-		// }
-
-		// SDL_Event polled_event;
-		// while (SDL_PollEvent(&polled_event))
-		// {
-		// 	processEvent(&polled_event);
-		// }
 	}
 
 	template<typename App> requires AppFunc<App>

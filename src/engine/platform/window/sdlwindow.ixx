@@ -4,6 +4,7 @@ module;
 
 export module engine.platform.sdlwindow;
 import engine.platform.sdlptr;
+import engine.core.appconfig;
 import std;
 
 export namespace engine::platform
@@ -17,7 +18,8 @@ export namespace engine::platform
 			static std::expected<SdlWindow, std::string> create();
 
 		public:
-			SdlWindow();
+			SdlWindow(int width, int height, const std::string_view title, std::uint64_t flags);
+			SdlWindow(const core::WindowConfig &config);
 			~SdlWindow() = default;
 
 			WindowObPtr getPtr() const;
@@ -32,14 +34,33 @@ export namespace engine::platform
 
 namespace engine::platform
 {
-	SdlWindow::SdlWindow()
+	SdlWindow::SdlWindow(const int width, const int height,
+		const std::string_view title, const std::uint64_t flags)
+	{
+		/*window_ptr = WindowPtr(SDL_CreateWindow("",1280,720,SDL_WINDOW_RESIZABLE));*/
+		window_ptr = WindowPtr(
+			SDL_CreateWindow(
+				title.data(),
+				width,
+				height,
+				flags)
+		);
+		if (!window_ptr)
+		{
+			SDL_Log("Couldn't create window: %s", SDL_GetError());
+			auto error = std::string("Failed to create SDL window: ") + SDL_GetError();
+			throw std::runtime_error(error);
+		}
+	}
+
+	SdlWindow::SdlWindow(const core::WindowConfig& config)
 	{
 		window_ptr = WindowPtr(
 			SDL_CreateWindow(
-				"",
-				1280,
-				720,
-				SDL_WINDOW_RESIZABLE)
+				config.title.data(),
+				config.width,
+				config.height,
+				config.flags)
 		);
 		if (!window_ptr)
 		{
@@ -56,7 +77,7 @@ namespace engine::platform
 
 	WindowObPtr SdlWindow::getPtr() const
 	{
-		return window_ptr;
+		return WindowObPtr(window_ptr);
 	}
 
 	SDL_Window& SdlWindow::getRef() const

@@ -12,17 +12,6 @@ import std;
 
 export namespace engine::render
 {
-    struct Vertex
-    {
-        float x;
-        float y;
-        float z;
-    };
-    constexpr std::array vertices{
-        Vertex{  .x = 0.0f, .y = -0.5f, .z = 0.0f },
-        Vertex{  .x = 0.5f,  .y = 0.5f, .z = 0.0f },
-        Vertex{  .x = -0.5f,  .y = 0.5f, .z = 0.0f }
-    };
     inline std::vector<std::uint8_t> readBinaryFile(const std::filesystem::path& path);
     inline SDL_GPUShader* loadShader(SDL_GPUDevice* device, const std::filesystem::path& path, const SDL_GPUShaderStage stage);
     class SdlGpuDevice

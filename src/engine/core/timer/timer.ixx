@@ -59,7 +59,7 @@ namespace engine::core
 		{
 			last_counter_ = start_counter_;
 			delta_time_ = 0.0;
-			setTargetFPS(144);
+			setTargetFPS(0);
 			return;
 		}
 	}

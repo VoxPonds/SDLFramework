@@ -25,7 +25,7 @@ export namespace engine::render
         public:
             explicit PrimitiveRenderer(utilities::BrPtr<FrameRecorder> recorder);
 
-            auto drawRectangle(const DrawRect2D& rect_2d, const core::Transform2D& transform) const -> std::expected<void, ERendererError>;
+            auto drawRectangle(const DrawRect2DCommand& rect_2d, const core::Transform2D& transform) const -> std::expected<void, ERendererError>;
 
             auto drawPrimitive(EPrimitiveTypes type, const core::Transform2D& transform) const -> std::expected<void, ERendererError>;
 
@@ -39,7 +39,7 @@ export namespace engine::render
 
 namespace engine::render
 {
-    auto PrimitiveRenderer::drawRectangle(const DrawRect2D& rect_2d,
+    auto PrimitiveRenderer::drawRectangle(const DrawRect2DCommand& rect_2d,
         const core::Transform2D& transform) const -> std::expected<void, ERendererError>
     {
         recorder_borrowed_->record(
@@ -61,7 +61,7 @@ namespace engine::render
     {
         recorder_borrowed_->record(
             PrimitiveCommand2D{
-                .primitive_2D = DrawRect2D{},
+                .primitive_2D = DrawRect2DCommand{},
                 .transform_2d = transform,
             }
         );

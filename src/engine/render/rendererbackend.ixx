@@ -20,8 +20,9 @@ export namespace engine::render
             {
                 return static_cast<Derived&>(*this);
             }
+
         public:
-            std::expected<void, ERendererError> render(const FrameData& data)
+            auto render(const FrameData& data) -> std::expected<void, ERendererError>
             {
                 auto& self = derived();
 

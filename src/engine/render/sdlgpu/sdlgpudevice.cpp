@@ -85,7 +85,7 @@ namespace engine::render
 
     platform::SdlGpuDeviceObPtr SdlGpuDevice::device() const
     {
-        return sdl_gpu_device;
+        return platform::SdlGpuDeviceObPtr(sdl_gpu_device);
     }
 
     platform::WindowObPtr SdlGpuDevice::window() const
@@ -127,7 +127,7 @@ namespace engine::render
             std::println("SDL_AcquireGPUCommandBuffer failed: {}",SDL_GetError());
             return std::unexpected(EGpuError::COMMAND_RECORDING_FAILED);
         }
-        return upload_command_buffer;
+        return std::expected<platform::GPUCommandBufferObPtr, EGpuError>(upload_command_buffer);
     }
 
     auto SdlGpuDevice::createGraphicsPipeline(const SDL_GPUGraphicsPipelineCreateInfo& info)

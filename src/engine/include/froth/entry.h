@@ -16,62 +16,33 @@
 #ifdef FROTH_DELEGATE_FRAMEWORK_MODE
     import engine.core.runtime;
     import engine.render.rendertypes;
-    /*#ifndef FROTH_APP
-        #error "FROTH_APP must be defined before including <froth/entry.h>"
-    #endif
-        inline auto& runtime = engine::core::Runtime<FROTH_APP>::instance();
-        /* This function runs once at startup. #1#
-        inline SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
-        {
-            runtime.init();
-            return SDL_APP_CONTINUE;
-        }
-
-        /* This function runs when a new event (mouse input, keypresses, etc) occurs. #1#
-        inline SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
-        {
-            runtime.processEvent(event);
-            if (runtime.isRunning()) return SDL_APP_CONTINUE;
-            return SDL_APP_SUCCESS;
-        }
-
-        /* This function runs once per frame, and is the heart of the program. #1#
-        inline SDL_AppResult SDL_AppIterate(void* appstate)
-        {
-            runtime.beginFrame();
-            runtime.iterate();
-            runtime.endFrame();
-            return SDL_APP_CONTINUE;
-        }
-
-        /* This function runs once at shutdown. #1#
-        inline void SDL_AppQuit(void* appstate, SDL_AppResult)
-        {
-            runtime.quit();
-        }*/
 
     #define FROTH_RUN_APP(AppType)\
-        inline auto& runtime = engine::core::Runtime<AppType>::instance(engine::render::ERenderBackend::SDL_RENDERER);\
+        inline auto& runtime = engine::core::Runtime<AppType>::instance(\
+            engine::render::ERenderBackend::SDL_RENDERER,\
+            AppType::appConfig()\
+        );\
         inline SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])\
         {\
-            runtime.init();\
+            std::invoke_r<void>(&engine::core::Runtime<AppType>::init, runtime);\
             return SDL_APP_CONTINUE;\
         }\
         inline SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)\
         {\
-            runtime.processEvent(event);\
-            return runtime.isRunning() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS; \
+            if (auto framework_event = engine::platform::translateSDLEvent(*event))\
+            std::invoke_r<void>(&engine::core::Runtime<AppType>::processEvent, runtime, framework_event.value());\
+            return std::invoke(&engine::core::Runtime<AppType>::isRunning, runtime) ? SDL_APP_CONTINUE : SDL_APP_SUCCESS; \
         }\
         inline SDL_AppResult SDL_AppIterate(void* appstate)\
         {\
-            runtime.beginFrame();\
-            runtime.iterate();\
-            runtime.endFrame();\
+            std::invoke_r<void>(&engine::core::Runtime<AppType>::beginFrame, runtime);\
+            std::invoke_r<void>(&engine::core::Runtime<AppType>::iterate, runtime);\
+            std::invoke_r<void>(&engine::core::Runtime<AppType>::endFrame, runtime);\
             return SDL_APP_CONTINUE;\
         }\
         inline void SDL_AppQuit(void* appstate, SDL_AppResult result)\
         {\
-            runtime.quit();\
+            std::invoke_r<void>(&engine::core::Runtime<AppType>::quit, runtime);\
         }
 
 #endif

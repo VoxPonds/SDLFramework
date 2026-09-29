@@ -45,7 +45,7 @@ export namespace engine::resource
 		{
 			if (auto texture_ptr = getImage(handle.value()))
 			{
-				return adapter::getImageSize(texture_ptr.value().get());
+				return adapter::getImageSize(utilities::ObPtr(texture_ptr.value().get()));
 			}
 			else
 			{
@@ -65,7 +65,7 @@ namespace engine::resource
 	{
 		if (!texture_ptr) return std::unexpected(EResourceError::NULL_PTR);
 
-		return adapter::getImageSize(texture_ptr.get());
+		return adapter::getImageSize(utilities::ObPtr(texture_ptr.get()));
 	}
 
 	std::expected<ImageHandle, EResourceError> ImageManager::findImage(const ImageKey& key)const
@@ -80,8 +80,8 @@ namespace engine::resource
 			key,
 			 [this](const ImageKey& k) -> ResourcePtr<ImageAsset>
 			{
-				 auto result = adapter::loadImage(k.path.string());
-				 if (!result) return nullptr;
+				auto result = adapter::loadImage(k.path.string());
+				if (!result) return nullptr;
 				return makeOwnRs<ImageAsset>(
 					std::move(result.value())
 				);

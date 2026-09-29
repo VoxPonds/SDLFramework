@@ -38,9 +38,6 @@ export namespace engine::resource
         }
     };
 
-	template<typename Resource>
-	struct ResourceTraits;
-
 	template<typename T>
 	struct DeleterTraits;
 
@@ -115,9 +112,10 @@ export namespace engine::resource
 	struct GpuDeleter
 	{
 		private:
-			SDL_GPUDevice* device_{nullptr};
+			SDL_GPUDevice* device_;
 
 		public:
+			GpuDeleter() = default;
 			explicit GpuDeleter(SDL_GPUDevice* device) noexcept:
 				device_(device)
 			{
@@ -127,6 +125,9 @@ export namespace engine::resource
 				if (ptr)  DeleterTraits<T>::destroy_func(device_, ptr);
 			}
 	};
+
+	template<typename Resource>
+	struct ResourceTraits;
 
 	template<>
 	struct ResourceTraits<ImageAsset>

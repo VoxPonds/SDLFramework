@@ -9,12 +9,12 @@ import std;
 
 export namespace engine::platform
 {
-    inline auto translateSDLEvent(const SDL_Event& event) -> std::optional<core::Event>;
+    inline auto translateSDLEvent(const union SDL_Event& event) -> std::optional<core::Event>;
 }
 
 namespace engine::platform
 {
-    auto translateSDLEvent(const SDL_Event& event) -> std::optional<core::Event>
+    auto translateSDLEvent(const union SDL_Event& event) -> std::optional<core::Event>
     {
         switch (event.type)
         {

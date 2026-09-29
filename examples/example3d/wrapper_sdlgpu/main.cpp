@@ -5,7 +5,7 @@ import engine.core.runtime;
 import example3d.wrappersdlgpu;
 import engine.render.rendertypes;
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
     auto& runtime = engine::core::Runtime<WrapperSdlGpuTest>::instance(engine::render::ERenderBackend::SDL_GPU);
     runtime.init();
@@ -14,9 +14,9 @@ int main(int argc, char* argv[])
     {
         runtime.beginFrame();
 
-        runtime.processEvent();
+        runtime.processEvents();
 
-        runtime.test();
+        runtime.iterate();
 
         runtime.endFrame();
     }

@@ -21,8 +21,7 @@ export namespace engine::render
             std::span<const CommandType> commands() const noexcept;
 
 			[[nodiscard]]
-	        bool empty() const noexcept
-			;
+	        bool empty() const noexcept;
     };
 
     template <typename CommandType>

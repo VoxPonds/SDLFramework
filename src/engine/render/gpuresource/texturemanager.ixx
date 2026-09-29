@@ -10,6 +10,7 @@ import engine.resource.resourceptr;
 import engine.resource.resourcemanager;
 import engine.resource.imageasset;
 import engine.platform.sdlptr;
+import engine.utilities;
 import std;
 
 export namespace engine::render
@@ -42,7 +43,7 @@ export namespace engine::render
 namespace engine::render
 {
 	TextureManager::TextureManager(SDL_Renderer& renderer_, resource::ResourceManager& manager):
-	renderer_adapter(renderer_),
+	renderer_adapter(utilities::borrow(renderer_)),
 	cpu_Rs_Manager(manager)
 	{
 	}
@@ -60,7 +61,7 @@ namespace engine::render
 			key,
 			[this](const resource::ImageHandle& k)
 			{
-				auto image = cpu_Rs_Manager.getImage(k);
+				const auto image = cpu_Rs_Manager.getImage(k);
 				if (!image) return resource::SdlTexturePtr{};
 				auto result = renderer_adapter.loadTexture(image.value());
 				if (!result) return resource::SdlTexturePtr{};

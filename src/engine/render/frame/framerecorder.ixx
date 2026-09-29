@@ -14,6 +14,7 @@ export namespace engine::render
     enum class ERendererError : std::uint8_t
     {
         NONE,
+    	GPU_FAILURE,
         INVALID_COMMAND,
     	INVALID_CAMERA,
         RENDER_FAILED,

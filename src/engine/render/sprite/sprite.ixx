@@ -15,6 +15,7 @@ export namespace engine::render
 		core::Vector2 position;
 		core::Vector2 size;
 	};
+
 	enum class FlipMode : std::uint8_t
 	{
 		FLIP_NONE,                                                                  /**< Do not flip */
@@ -22,6 +23,7 @@ export namespace engine::render
 		FLIP_VERTICAL,                                                              /**< flip vertically */
 		FLIP_HORIZONTAL_AND_VERTICAL = (FLIP_HORIZONTAL | FLIP_VERTICAL)    /**< flip horizontally and vertically (not a diagonal flip) */
 	};
+
 	class Sprite final 
 	{
 		private:

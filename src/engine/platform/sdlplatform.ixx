@@ -23,12 +23,25 @@ export namespace engine::platform
             {
                 SDL_Quit();
             }
+
+            static auto pollEvent() -> std::optional<core::Event>;
     };
+
+
 }
 
 namespace engine::platform
 {
+    auto SdlPlatform::pollEvent() -> std::optional<core::Event>
+    {
+        SDL_Event event;
 
+        if (!SDL_PollEvent(&event))
+        {
+            return std::nullopt;
+        }
 
+        return translateSDLEvent(event);
+    }
 
 }
