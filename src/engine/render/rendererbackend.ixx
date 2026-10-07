@@ -1,13 +1,13 @@
 module;
 
 export module engine.render.rendererbackend;
+
 import engine.render.sprite;
 import engine.render.framerecorder;
 import engine.render.framedata;
 import engine.render.camera;
 import engine.render.rendertypes;
 import engine.utilities;
-import engine.core.math;
 import std;
 
 export namespace engine::render

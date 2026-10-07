@@ -88,7 +88,7 @@ namespace engine::render
         return platform::SdlGpuDeviceObPtr(sdl_gpu_device);
     }
 
-    platform::WindowObPtr SdlGpuDevice::window() const
+    platform::SdlWindowObPtr SdlGpuDevice::window() const
     {
         return  window_borrowed;
     }
@@ -119,7 +119,7 @@ namespace engine::render
         };
     }
 
-    auto SdlGpuDevice::acquireCommandBuffer() const -> std::expected<platform::GPUCommandBufferObPtr, EGpuError>
+    auto SdlGpuDevice::acquireCommandBuffer() const -> std::expected<platform::SdlGpuCommandBufferObPtr, EGpuError>
     {
         const auto upload_command_buffer = SDL_AcquireGPUCommandBuffer(sdl_gpu_device.get());
         if (!upload_command_buffer)
@@ -127,7 +127,7 @@ namespace engine::render
             std::println("SDL_AcquireGPUCommandBuffer failed: {}",SDL_GetError());
             return std::unexpected(EGpuError::COMMAND_RECORDING_FAILED);
         }
-        return std::expected<platform::GPUCommandBufferObPtr, EGpuError>(upload_command_buffer);
+        return std::expected<platform::SdlGpuCommandBufferObPtr, EGpuError>(upload_command_buffer);
     }
 
     auto SdlGpuDevice::createGraphicsPipeline(const SDL_GPUGraphicsPipelineCreateInfo& info)

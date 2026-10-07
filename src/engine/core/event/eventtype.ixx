@@ -1,7 +1,8 @@
 module;
 
 export module engine.core.eventtype;
-import engine.platform.inputcode;
+export import :inputeventtype;
+
 import std;
 
 export namespace engine::core
@@ -12,21 +13,16 @@ export namespace engine::core
 
         EVENT_KEY_DOWN,
         EVENT_KEY_UP,
-    };
 
-    struct KeyboardEvent
-    {
-        EEventType type;
-        /*std::uint32_t reserved;
-        std::uint64_t timestamp;
-        std::uint32_t windowID;
-        std::uint32_t which;*/
-        platform::EInputCode scancode;
-        std::uint32_t key;
-        /*std::uint32_t mod;
-        std::uint16_t raw;*/
-        bool pressed;
-        bool down;
+        EVENT_MOUSE_BUTTON_DOWN,
+        EVENT_MOUSE_BUTTON_UP,
+
+        EVENT_FINGER_DOWN,
+        EVENT_FINGER_UP,
+        EVENT_FINGER_MOTION,
+        EVENT_FINGER_CANCELED,
+        EVENT_FINGER_FIRST = EVENT_FINGER_DOWN,
+        EVENT_FINGER_LAST = EVENT_FINGER_CANCELED,
     };
 
     struct QuitEvent
@@ -37,7 +33,13 @@ export namespace engine::core
     };
 
     using Event = std::variant<
-        KeyboardEvent,
-        QuitEvent
+        QuitEvent,
+        InputEvent,
+        std::monostate
     >;
+    using FrothEvent = Event;
+
 }
+
+export using engine::core::Event;
+export using engine::core::FrothEvent;

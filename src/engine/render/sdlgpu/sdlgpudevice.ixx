@@ -18,7 +18,7 @@ export namespace engine::render
     {
         private:
             platform::SdlGpuDevicePtr sdl_gpu_device;
-            platform::WindowObPtr window_borrowed;
+            platform::SdlWindowObPtr window_borrowed;
             RenderCapabilities capabilities_;
 
         public:
@@ -26,14 +26,14 @@ export namespace engine::render
             ~SdlGpuDevice();
 
             platform::SdlGpuDeviceObPtr device() const;
-            platform::WindowObPtr window() const;
+            platform::SdlWindowObPtr window() const;
 
             auto createShader(const std::filesystem::path& path,
                 SDL_GPUShaderStage stage) const -> std::expected<resource::SdlGpuShaderPtr, EGpuError>;
 
             auto createGpuBuffer(const SDL_GPUBufferCreateInfo& buffer_info) const -> std::expected<resource::SdlGpuBufferPtr, EGpuError>;
 
-            auto acquireCommandBuffer() const -> std::expected<platform::GPUCommandBufferObPtr, EGpuError>;
+            auto acquireCommandBuffer() const -> std::expected<platform::SdlGpuCommandBufferObPtr, EGpuError>;
 
             auto createGraphicsPipeline( const SDL_GPUGraphicsPipelineCreateInfo& info)
                 const ->std::expected<resource::SdlGpuGraphicsPipelinePtr, EGpuError>;

@@ -1,6 +1,7 @@
 module;
 
 export module engine.render.mesh;
+
 import engine.core.math;
 import std;
 
@@ -8,11 +9,11 @@ export namespace engine::render
 {
     struct VertexData
     {
-        core::Vector3 position;
-        core::Vector3 normal;
-        core::Vector2 uv0;
-        core::BaseColor color;
-        core::Vector4 tangent;
+        math::Vector3 position;
+        math::Vector3 normal;
+        math::Vector2 uv0;
+        math::BaseColor color;
+        math::Vector4 tangent;
     };
 
     struct MeshData

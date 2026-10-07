@@ -57,7 +57,7 @@ export namespace engine::render
         float z;
     };
 
-    inline constexpr std::array vertices{
+    constexpr std::array vertices{
         Vertex{  .x = 0.0f, .y = -0.5f, .z = 0.0f },
         Vertex{  .x = 0.5f,  .y = 0.5f, .z = 0.0f },
         Vertex{  .x = -0.5f,  .y = 0.5f, .z = 0.0f }
@@ -66,25 +66,27 @@ export namespace engine::render
     class SdlGpuRenderer
     {
         private:
-            utilities::ObserverPtr<SdlGpuDevice> device_wrapper_;
-            platform::SdlGpuDeviceObPtr device_;
-            resource::ResourceManager& resource_manager_borrowed_;
+            utilities::ObserverPtr<SdlGpuDevice> m_device_wrapper_;
+            platform::SdlGpuDeviceObPtr m_device_;
+            resource::ResourceManager& m_resource_manager_borrowed_;
 
-            platform::GPUCommandBufferObPtr command_buffer_;
-            std::optional<SdlGpuCommandContext> command_context_;
-            resource::SdlGpuTextureObPtr swapchain_texture_;
+            platform::SdlGpuCommandBufferObPtr m_command_buffer_;
+            std::optional<SdlGpuCommandContext> m_command_context_;
+            resource::SdlGpuTextureObPtr m_swapchain_texture_;
 
-            resource::SdlGpuShaderPtr vertex_shader_;
-            resource::SdlGpuShaderPtr fragment_shader_;
-            resource::SdlGpuBufferPtr gpu_buffer_;
-            resource::SdlGpuGraphicsPipelinePtr pipeline_;
+            resource::SdlGpuShaderPtr m_vertex_shader_;
+            resource::SdlGpuShaderPtr m_fragment_shader_;
+            resource::SdlGpuBufferPtr m_gpu_buffer_;
+            resource::SdlGpuGraphicsPipelinePtr m_pipeline_;
 
-            EFrameState frame_state_;
-            std::uint32_t frame_width_{};
-            std::uint32_t frame_height_{};
+            EFrameState m_frame_state_;
+            std::uint32_t m_frame_width_{};
+            std::uint32_t m_frame_height_{};
 
         public:
-            SdlGpuRenderer(utilities::BorrowedPtr<SdlGpuDevice> device, resource::ResourceManager& manager);
+            SdlGpuRenderer(util::BorrowedPtr<SdlGpuDevice> device, resource::ResourceManager& manager);
+
+            auto render(const FrameData &data) -> std::expected<void, ERendererError>;
 
             auto initialize() -> std::expected<void, EGpuError>;
 
@@ -92,13 +94,11 @@ export namespace engine::render
 
             auto clear() -> std::expected<void, EGpuError>;
 
-            auto execute(const RenderCommand3D &render_command_3d) -> std::expected<void, EGpuError>;
+            auto execute(const Camera& camera, std::span<const RenderCommand3D> command_3d_list) -> std::expected<void, EGpuError>;
 
             auto endFrame() -> std::expected<void, EGpuError>;
 
-            auto submit(platform::GPUCommandBufferBrPtr command_buffer) -> std::expected<void, EGpuError>;
-
-            auto render(const FrameData &data) -> std::expected<void, ERendererError>;
+            auto submit(platform::SdlGpuCommandBufferBrPtr command_buffer) -> std::expected<void, EGpuError>;
 
             auto renderTest() -> std::expected<void, EGpuError>;
     };

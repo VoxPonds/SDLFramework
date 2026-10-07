@@ -22,13 +22,14 @@ export namespace engine::core
 			inline static std::optional<double> target_frame_time_;
 
 	    public:
+    		using DeltaTimeType = double;
 			Timer() = delete;
 
     		static void init();
 	        static void beginFrame();
 	        static void endFrame();
 
-			static double deltaTime();
+			static DeltaTimeType deltaTime();
     		static std::uint64_t getTicks();
 	        /*
 	        double unscaledDeltaTime() const;
@@ -78,7 +79,7 @@ namespace engine::core
 		limitFrameRate();
 	}
 
-	double Timer::deltaTime()
+	Timer::DeltaTimeType Timer::deltaTime()
 	{
 		return delta_time_;
 	}
@@ -122,5 +123,7 @@ namespace engine::core
 		}
 	}
 }
+
+export using engine::core::Timer;
 
 

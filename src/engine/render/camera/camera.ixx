@@ -15,20 +15,20 @@ export namespace engine::render
 	};
 	struct Camera2D 
 	{
-		core::Vector2 position{0.0,0.0};
-		core::Vector2 viewport_size{0.0,0.0};
+		math::Vector2 position{0.0,0.0};
+		math::Vector2 viewport_size{0.0,0.0};
 		float rotation{};
 		float zoom{ 1.0f };
 
-		core::Vector2 worldToScreen(core::Vector2 world_pos, core::Vector2 scroll_factor = { 1.0f, 1.0f }) const
+		math::Vector2 worldToScreen(math::Vector2 world_pos, math::Vector2 scroll_factor = { 1.0f, 1.0f }) const
 		{
 			return world_pos - position * scroll_factor;
 		}
-		core::Vector2 screenToWorld(core::Vector2 screen_pos) const
+		math::Vector2 screenToWorld(math::Vector2 screen_pos) const
 		{
 			return screen_pos + position;
 		}
-		void follow(core::Vector2 target)
+		void follow(math::Vector2 target)
 		{
 			position = target - viewport_size * 0.5f;
 
@@ -38,21 +38,21 @@ export namespace engine::render
 
 	struct Camera3D 
 	{
-		core::Vector3 position{};
-		core::Quaternion orientation{};
+		math::Vector3 position{};
+		math::Quaternion orientation{};
 		EProjectionType projection{};
 		float vertical_fov_radians{};
 		float orthographic_height{};
 		float near_clip{};
 		float far_clip{};
-		core::Vector2 viewport_size{};
+		math::Vector2 viewport_size{};
 
-		core::Matrix4 viewMatrix() const
+		math::Matrix4 viewMatrix() const
 		{
-			const core::Matrix4 rotation = core::castMat4(orientation);
-			const core::Matrix4 translation = core::translate(core::Matrix4(1.0f), position);
+			const math::Matrix4 rotation = math::castMat4(orientation);
+			const math::Matrix4 translation = math::translate(math::Matrix4(1.0f), position);
 
-			return core::inverse(translation * rotation);
+			return math::inverse(translation * rotation);
 		}
 
 		glm::mat4 projectionMatrix() const
@@ -61,7 +61,7 @@ export namespace engine::render
 			switch (projection)
 			{
 				case EProjectionType::PERSPECTIVE:
-					return core::perspective(
+					return math::perspective(
 						vertical_fov_radians,
 						aspect,
 						near_clip,
@@ -71,7 +71,7 @@ export namespace engine::render
 				{
 					const float half_height = orthographic_height * 0.5f;
 					const float half_width = half_height * aspect;
-					return core::ortho(
+					return math::ortho(
 						-half_width,
 						 half_width,
 						-half_height,
@@ -82,9 +82,9 @@ export namespace engine::render
 				}
 			}
 
-			return core::Matrix4(1.0f);
+			return math::Matrix4(1.0f);
 		}
-		core::Matrix4 viewProjectionMatrix() const
+		math::Matrix4 viewProjectionMatrix() const
 		{
 			return projectionMatrix() * viewMatrix();
 		}

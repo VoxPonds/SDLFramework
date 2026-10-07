@@ -1,7 +1,6 @@
 module;
 #include "SDL3/SDL_render.h"
 #include "glm/glm.hpp"
-#include "variant"
 
 module engine.render.sdlrenderer;
 
@@ -50,7 +49,7 @@ namespace engine::render
 		return {};
 	}
 
-	void SdlRenderer::drawRect(const Camera2D &camera, const DrawRect2DCommand &command) const
+	void SdlRenderer::drawRect(const Camera2D &camera, const Rect2DCommand &command, const math::Transform2D& transform2d) const
 	{
     	const auto& [rect_pos, rect_size] = command.rect;
     	const auto& [red, green, blue, alpha] = command.color;
@@ -62,15 +61,18 @@ namespace engine::render
 			.h = rect_size.y,
 		};
 
-    	SDL_SetRenderDrawColorFloat(
+    	if (!SDL_SetRenderDrawColorFloat(
 			renderer_ptr.get(),
 			red,
 			green,
 			blue,
 			alpha
-		);
+		))
+    	{
+    		std::println("SDL_SetRenderDrawColorFloat failed: {}", SDL_GetError());
+    	}
 
-    	if (command.filled)
+	    if (command.filled)
     	{
     		SDL_RenderFillRect(
 				renderer_ptr.get(),
@@ -84,6 +86,36 @@ namespace engine::render
 				&rect
 			);
     	}
+	}
+
+	void SdlRenderer::drawSimpleText(const Camera2D& camera, const SimpleText2DCommand& command, const math::Transform2D& transform2d) const
+	{
+    	const auto position = transform2d.position;
+    	const std::string text {command.text};
+
+	    constexpr auto scale = 2.0f;
+    	float r {};
+    	float g {};
+    	float b {};
+    	float a {};
+
+    	SDL_GetRenderDrawColorFloat(renderer_ptr.get(), &r, &g, &b, &a);
+    	SDL_SetRenderScale(renderer_ptr.get(), scale, scale);
+    	auto [dr,dg,db,da] = command.color;
+    	SDL_SetRenderDrawColorFloat(renderer_ptr.get(), dr, dg, db, da);
+
+    	if (!SDL_RenderDebugText(
+			renderer_ptr.get(),
+			position.x/scale,
+			position.y/scale,
+			text.c_str()
+		))
+    	{
+    		std::println("SDL_RenderDebugText failed: {}", SDL_GetError());
+    	}
+
+    	SDL_SetRenderScale(renderer_ptr.get(), 1.0, 1.0f);
+    	SDL_SetRenderDrawColorFloat(renderer_ptr.get(), r, g, b, a);
 	}
 
 	void SdlRenderer::drawTexture(const Camera2D& camera, const SpriteRenderCommand& command)
@@ -128,9 +160,9 @@ namespace engine::render
 			src_rect = nullptr;
 		}
 
-		const core::Vector2 source_size =
+		const math::Vector2 source_size =
 			source_rect
-			? core::Vector2{
+			? math::Vector2{
 					source_rect->size.x,
 					source_rect->size.y
 				}
@@ -163,10 +195,7 @@ namespace engine::render
 			)
 		)
 		{
-			std::println(
-				"SDL_RenderTextureRotated failed: {}",
-				SDL_GetError()
-			);
+			std::println("SDL_RenderTextureRotated failed: {}", SDL_GetError());
 		}
 	}
 
@@ -209,9 +238,9 @@ namespace engine::render
 			src_rect = nullptr;
 		}
 
-		const core::Vector2 source_size =
+		const math::Vector2 source_size =
 			source_rect
-			? core::Vector2{
+			? math::Vector2{
 				source_rect->size.x,
 				source_rect->size.y
 			}
@@ -230,7 +259,7 @@ namespace engine::render
 		if (!SDL_RenderTextureRotated
 			(
 				renderer_ptr.get(),
-				texture.value().get(),
+				texture->get(),
 				src_rect,
 				dst_rect,
 				command.transform_2d.rotation,
@@ -284,9 +313,13 @@ namespace engine::render
 				}
 				else if constexpr (std::is_same_v<DT, PrimitiveCommand2D>)
 				{
-					if(const auto rect_command = std::get_if<DrawRect2DCommand>(&command_.primitive_2D); rect_command)
+					if(const auto rect_command = std::get_if<Rect2DCommand>(&command_.primitive_2D); rect_command)
 					{
-						drawRect(camera_2d, *rect_command);
+						drawRect(camera_2d, *rect_command, command_.transform_2d);
+					}
+					if(const auto text_command = std::get_if<SimpleText2DCommand>(&command_.primitive_2D); text_command)
+					{
+						drawSimpleText(camera_2d, *text_command, command_.transform_2d);
 					}
 				}
 			},

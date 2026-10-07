@@ -19,9 +19,9 @@ export namespace engine::render
 	{
 		using TextureHandle = resource::ResourceHandle<SDL_Texture>;
 		private:
-			resource::ResourceCache<resource::ImageHandle, SDL_Texture> resource_cache_;
-			SdlRendererAdapter renderer_adapter;
-			resource::ResourceManager& cpu_Rs_Manager;
+			resource::ResourceCache<resource::ImageHandle, SDL_Texture> m_resource_cache_;
+			SdlRendererAdapter m_renderer_adapter;
+			resource::ResourceManager& m_cpu_rs_Manager;
 
 		public:
 			TextureManager(SDL_Renderer& renderer_, resource::ResourceManager& manager);
@@ -43,44 +43,44 @@ export namespace engine::render
 namespace engine::render
 {
 	TextureManager::TextureManager(SDL_Renderer& renderer_, resource::ResourceManager& manager):
-	renderer_adapter(utilities::borrow(renderer_)),
-	cpu_Rs_Manager(manager)
+	m_renderer_adapter(utilities::borrow(renderer_)),
+	m_cpu_rs_Manager(manager)
 	{
 	}
 
 	auto TextureManager::findTexture(const resource::ImageHandle& key) const -> std::expected<TextureHandle, resource::EResourceError>
 	{
-		auto handle = resource_cache_.find(key);
+		auto handle = m_resource_cache_.find(key);
 		return handle;
 	}
 
 	auto TextureManager::loadTexture(const resource::ImageHandle& key) -> std::expected<TextureHandle, resource::EResourceError>
 	{
 		std::println("LoadTexture: {}", key.getId());
-		return resource_cache_.load(
+		return m_resource_cache_.load(
 			key,
 			[this](const resource::ImageHandle& k)
 			{
-				const auto image = cpu_Rs_Manager.getImage(k);
+				const auto image = m_cpu_rs_Manager.getImage(k);
 				if (!image) return resource::SdlTexturePtr{};
-				auto result = renderer_adapter.loadTexture(image.value());
+				auto result = m_renderer_adapter.loadTexture(image.value());
 				if (!result) return resource::SdlTexturePtr{};
 				return std::move(result.value());
 			});
 	}
 
-	auto TextureManager::getTexture(TextureHandle handle) -> std::expected<resource::SdlTextureObPtr, resource::EResourceError>
+	auto TextureManager::getTexture(const TextureHandle handle) -> std::expected<resource::SdlTextureObPtr, resource::EResourceError>
 	{
-		return resource_cache_.get(handle);
+		return m_resource_cache_.get(handle);
 	}
 
 	auto TextureManager::unloadTexture(const resource::ImageHandle& key) -> std::expected<void, resource::EResourceError>
 	{
-		return resource_cache_.erase(key);
+		return m_resource_cache_.erase(key);
 	}
 
 	void TextureManager::clearTextures()
 	{
-		resource_cache_.clear();
+		m_resource_cache_.clear();
 	}
 }

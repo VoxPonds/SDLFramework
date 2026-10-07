@@ -40,7 +40,9 @@ export namespace engine::render
 
 			auto render(const FrameData& data)-> std::expected<void, ERendererError>;
 
-			void drawRect(const Camera2D& camera, const DrawRect2DCommand& command) const;
+			void drawRect(const Camera2D& camera, const Rect2DCommand& command, const math::Transform2D& transform2d) const;
+			void drawSimpleText(const Camera2D& camera, const SimpleText2DCommand& command, const math::Transform2D& transform2d) const;
+
 			void drawTexture(const Camera2D& camera, const SpriteRenderCommand& command);
 			void drawTexture(const SpriteRenderCommand& command);
 

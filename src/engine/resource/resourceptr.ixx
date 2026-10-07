@@ -24,8 +24,8 @@ export namespace engine::resource
 		using element_type = T;
 	};
 
-	template<typename T, typename... Args>
-	ResourcePtr<T> makeOwnRs(Args&&... args)
+	template<typename T, typename... Args> requires std::constructible_from<T, Args...>
+	auto makeOwnRs(Args&&... args) -> ResourcePtr<T>
 	{
 		return ResourcePtr<T>{new T{std::forward<Args>(args)...}};
 	}

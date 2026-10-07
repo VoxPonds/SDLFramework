@@ -13,7 +13,7 @@ Rotation unit: radians
 Depth: [0, 1]*/
 export module engine.core.math;
 
-export namespace engine::core
+export namespace engine::core::math
 {
     using Vector2 = glm::vec2;
     using IntVector2 = glm::ivec2;
@@ -57,3 +57,6 @@ export namespace engine::core
     };
 
 }
+
+export namespace core = engine::core::math;
+export namespace math = engine::core::math;

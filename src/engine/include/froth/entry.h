@@ -1,16 +1,33 @@
 #ifndef FROTH_FRAMEWORK_ENTRY_H
 #define FROTH_FRAMEWORK_ENTRY_H
-    #if defined(FROTH_MANUAL_FRAMEWORK_MODE) && defined(FROTH_DELEGATE_FRAMEWORK_MODE)
+#if defined(FROTH_MANUAL_FRAMEWORK_MODE) && defined(FROTH_DELEGATE_FRAMEWORK_MODE)
         #error "FROTH_MANUAL_FRAMEWORK_MODE and FROTH_DELEGATE_FRAMEWORK_MODE cannot be defined at the same time."
     #endif
     #ifdef FROTH_MANUAL_FRAMEWORK_MODE
-        #include <SDL3/SDL_main.h>
         #include <SDL3/SDL.h>
+        #include <SDL3/SDL_main.h>
     #endif
     #ifdef FROTH_DELEGATE_FRAMEWORK_MODE
         #define SDL_MAIN_USE_CALLBACKS
         #include <SDL3/SDL_main.h>
     #endif
+#endif
+
+#ifdef FROTH_MANUAL_FRAMEWORK_MODE
+    #define FROTH_FIRST(first, ...) first
+    #define FROTH_MAIN_ARGS(...) __VA_ARGS__
+    #define FROTH_MAIN_DEFAULT_ARGS(...) int, char**
+    #define FROTH_MAIN_SELECT(...) FROTH_FIRST( __VA_OPT__(FROTH_MAIN_ARGS,) FROTH_MAIN_DEFAULT_ARGS )
+    #ifdef main
+        #undef main
+    #endif
+    #define main(...) froth_main(FROTH_MAIN_SELECT(__VA_ARGS__)(__VA_ARGS__))
+
+    int froth_main(FROTH_MAIN_DEFAULT_ARGS());
+    inline int SDL_main(const int argc, char** argv)
+    {
+        return froth_main(argc, argv);
+    }
 #endif
 
 #ifdef FROTH_DELEGATE_FRAMEWORK_MODE
@@ -20,7 +37,7 @@
     #define FROTH_RUN_APP(AppType)\
         inline auto& runtime = engine::core::Runtime<AppType>::instance(\
             engine::render::ERenderBackend::SDL_RENDERER,\
-            AppType::appConfig()\
+            AppType::config()\
         );\
         inline SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])\
         {\
@@ -44,6 +61,5 @@
         {\
             std::invoke_r<void>(&engine::core::Runtime<AppType>::quit, runtime);\
         }
-
 #endif
 

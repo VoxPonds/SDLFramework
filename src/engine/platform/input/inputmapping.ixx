@@ -1,26 +1,12 @@
 module;
-#include <initializer_list>
 
 export module engine.platform.inputsystem:inputmapping;
 import engine.platform.inputcode;
-import std;
 
+import std;
 
 export namespace engine::platform
 {
-    enum class StandardAction : std::uint8_t
-    {
-        ACTION_FORWARD,
-        ACTION_LEFT,
-        ACTION_RIGHT,
-        ACTION_BACKWARD,
-        ACTION_RUN,
-        ACTION_JUMP,
-        ACTION_CROUCH,
-        ACTION_ATTACK,
-        ACTION_INTERACT,
-    };
-
     enum class TriggerType : std::uint8_t
     {
         TRIGGER_PRESSED,
@@ -30,32 +16,46 @@ export namespace engine::platform
         TRIGGER_CHORD,
     };
 
-    enum ActionMode : std::uint8_t
+    enum class ActionMode : std::uint8_t
     {
         MODE_HOLD,
         MODE_TOGGLE
     };
 
-    enum class InputDeviceType : std::uint8_t
+    enum class InputSourceType : std::uint8_t
     {
-        DEVICE_PC,
-        DEVICE_GAMEPAD,
-        DEVICE_MOBILE,
-        DEVICE_COUNT,
+        SOURCE_KEYBOARD,
+        SOURCE_MOUSE,
+        SOURCE_TOUCH,
+        SOURCE_GAMEPAD,
+        SOURCE_SENSOR,
+        SOURCE_COUNT,
     };
 
-    struct SingleInputBind
+    struct ButtonBind
     {
-        EInputCode key;
-        TriggerType triggerType;//x. or x-
+        ButtonInput button {};
+        TriggerType triggerType {};//x. or x-
     };
+
+    struct TouchGestureBind
+    {
+        ETouchGesture gesture {};
+    };
+
+    struct ClickBind
+    {
+        EClickRegion region {};
+    };
+
+    using SingleInputBind = std::variant<ButtonBind, ClickBind>;
 
     struct InputSequence
     {
-        std::vector<SingleInputBind> sequence_;//x.+x. or x.+y.
+        std::vector<SingleInputBind> sequence_ {};//x.+x. or x.+y.
         std::uint64_t tolerance_ms_ { 250 };
-        mutable std::optional<std::uint64_t> lastTriggerTime{ std::nullopt };
-        mutable std::size_t sequenceIndex{ 0 };
+        mutable std::optional<std::uint64_t> lastTriggerTime { std::nullopt };
+        mutable std::size_t sequenceIndex { 0 };
 
         InputSequence(const SingleInputBind bind)
             : sequence_{bind}
@@ -73,11 +73,13 @@ export namespace engine::platform
         std::size_t sequenceIndex{0};
     };
 
-    using InputAlternative = std::vector<InputSequence>;
+    using ActionBind = std::variant<InputSequence, TouchGestureBind>;
+    using InputAlternative = std::vector<ActionBind>;
+
     struct ActionProfile
     {
         InputAlternative mapping_lists_;//x.+x. or x.+y- || a.+a.
-        ActionMode actionMode{MODE_HOLD};
+        ActionMode actionMode{ActionMode::MODE_HOLD};
 
     };
 
@@ -105,15 +107,15 @@ export namespace engine::platform
 
     namespace input
     {
-        constexpr auto makeBind(const EInputCode key, const TriggerType trigger) -> SingleInputBind
+        constexpr auto makeBind(const ButtonInput button, const TriggerType trigger) -> SingleInputBind
         {
-            return{
-                .key {key},
+            return ButtonBind{
+                .button {button},
                 .triggerType {trigger}
             };
         }
 
-        constexpr auto makeSingleSequence(const EInputCode input, const TriggerType trigger = TriggerType::TRIGGER_PRESSED) -> InputSequence
+        constexpr auto makeSingleSequence(const ButtonInput input, const TriggerType trigger = TriggerType::TRIGGER_PRESSED) -> InputSequence
         {
             return {makeBind(input, trigger)};
         }
@@ -123,19 +125,27 @@ export namespace engine::platform
             return {inputs};
         }
 
-        constexpr auto pressed(const EInputCode input) -> SingleInputBind
+        template<IsButton E>
+        constexpr auto pressed(const E input) -> SingleInputBind
         {
-            return makeBind(input, TriggerType::TRIGGER_PRESSED);
+            return makeBind({std::to_underlying(input)}, TriggerType::TRIGGER_PRESSED);
         }
 
-        constexpr auto down(const EInputCode input) -> SingleInputBind
+        template<IsButton E>
+        constexpr auto down(const E input) -> SingleInputBind
         {
-            return makeBind(input, TriggerType::TRIGGER_DOWN);
+            return makeBind({std::to_underlying(input)}, TriggerType::TRIGGER_DOWN);
         }
 
-        constexpr auto released(const EInputCode input) -> SingleInputBind
+        template<IsButton E>
+        constexpr auto released(const E input) -> SingleInputBind
         {
-            return makeBind(input, TriggerType::TRIGGER_RELEASED);
+            return makeBind({std::to_underlying(input)}, TriggerType::TRIGGER_RELEASED);
+        }
+
+        constexpr auto click(const EClickRegion region) -> SingleInputBind
+        {
+            return ClickBind{region};
         }
 
         constexpr auto operator>>(const SingleInputBind lhs, const SingleInputBind rhs) -> InputSequence
@@ -159,7 +169,7 @@ export namespace engine::platform
             return lhs;
         }
 
-        constexpr auto operator|(InputAlternative&& lhs, const InputSequence rhs) -> InputAlternative
+        constexpr auto operator|(InputAlternative&& lhs, const InputSequence& rhs) -> InputAlternative
         {
             lhs.emplace_back(rhs);
             return lhs;

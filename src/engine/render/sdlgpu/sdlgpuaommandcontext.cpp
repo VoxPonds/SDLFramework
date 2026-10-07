@@ -8,15 +8,16 @@ import engine.resource.resourcetraits;
 namespace engine::render
 {
     SdlGpuCommandContext::SdlGpuCommandContext(const platform::SdlGpuDeviceBrPtr device,
-        const platform::GPUCommandBufferBrPtr command_buffer):
+        const platform::SdlGpuCommandBufferBrPtr command_buffer):
         device_(device.get()),
         command_buffer_(command_buffer.get())
     {
     }
 
-    auto SdlGpuCommandContext::uploadBufferBytes(resource::SdlGpuBufferBrPtr gpu_buffer,
+    auto SdlGpuCommandContext::uploadBufferBytes(const resource::SdlGpuBufferBrPtr gpu_buffer,
         const std::span<const std::byte> byte_data) const -> std::expected<void, EGpuError>
     {
+
         const auto byte_size = byte_data.size_bytes();
         if (byte_size > std::numeric_limits<std::uint32_t>::max())
         {
@@ -30,7 +31,7 @@ namespace engine::render
             //.props =
         };
 
-        resource::SdlGpuTransferBufferPtr transfer_buffer = {
+        const resource::SdlGpuTransferBufferPtr transfer_buffer = {
             SDL_CreateGPUTransferBuffer(device_.get(), &transfer_info),
             resource::ResourceTraits<SDL_GPUTransferBuffer>::Deleter(device_.get())
         };
@@ -56,12 +57,12 @@ namespace engine::render
             std::println("SDL_BeginGPUCopyPass failed: {}",SDL_GetError());
             return std::unexpected(copy_pass.error());
         }
-        SDL_GPUTransferBufferLocation source{
+        const SDL_GPUTransferBufferLocation source{
             .transfer_buffer = transfer_buffer.get(),
             .offset = 0,
         };
 
-        SDL_GPUBufferRegion destination{
+        const SDL_GPUBufferRegion destination{
             .buffer = &gpu_buffer.get(),
             .offset = 0,
             .size = transfer_info.size
@@ -71,15 +72,30 @@ namespace engine::render
 
         endCopyPass(copy_pass.value());
 
-        SDL_SubmitGPUCommandBuffer(command_buffer_.get());
-
+        const auto submit_result = SDL_SubmitGPUCommandBuffer(command_buffer_.get());
+        if (!submit_result)
+        {
+            std::println("SDL_SubmitGPUCommandBuffer failed: {}", SDL_GetError());
+        }
         return{};
     }
 
+    auto SdlGpuCommandContext::acquireRenderPass(const SDL_GPUColorTargetInfo &color_target) const -> std::expected<SdlGpuRenderPass, EGpuError>
+    {
+        const auto pass_result = beginRenderPass(color_target);
+        if (!pass_result)
+        {
+            std::println("SDL_BeginRenderPass failed: {}",SDL_GetError());
+            return std::unexpected(pass_result.error());
+        }
+        const auto render_pass = pass_result.value();
+        return SdlGpuRenderPass{render_pass};
+    }
+
     auto SdlGpuCommandContext::draw(const SDL_GPUColorTargetInfo& color_target,
-        const resource::SdlGpuGraphicsPipelineBrPtr pipeline,
-        const resource::SdlGpuBufferBrPtr gpu_buffer,
-        const std::uint32_t vertex_count) const -> std::expected<void, EGpuError>
+                                    const resource::SdlGpuGraphicsPipelineBrPtr pipeline,
+                                    const resource::SdlGpuBufferBrPtr gpu_buffer,
+                                    const std::uint32_t vertex_count) const -> std::expected<void, EGpuError>
     {
         const auto result = beginRenderPass(color_target);
         if (!result)

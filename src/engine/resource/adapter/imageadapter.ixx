@@ -29,7 +29,7 @@ export namespace engine::resource
 		public:
 			ImageAdapter() = delete;
 
-			static core::Vector2 getImageSize(utilities::ObPtr<ImageAsset> ptr);
+			static math::Vector2 getImageSize(utilities::ObPtr<ImageAsset> ptr);
 			static std::expected<ImageAsset, EResourceError> loadImage(std::string_view path);
 			
 	};
@@ -37,22 +37,18 @@ export namespace engine::resource
 
 namespace engine::resource
 {
-	core::Vector2 ImageAdapter::getImageSize(utilities::ObPtr<ImageAsset> ptr)
+	math::Vector2 ImageAdapter::getImageSize(utilities::ObPtr<ImageAsset> ptr)
 	{
-		return core::Vector2{ ptr->width,ptr->height };
+		return math::Vector2{ ptr->width,ptr->height };
 	}
 
-	std::expected<ImageAsset, EResourceError> ImageAdapter::loadImage(std::string_view path)
+	std::expected<ImageAsset, EResourceError> ImageAdapter::loadImage(const std::string_view path)
 	{
 		SdlSurfacePtr surface{
 			IMG_Load(std::string{path}.c_str())
 		};
 		if (!surface)
 		{
-			std::println("IMG_Load failed");
-			std::println("SDL error: {}", SDL_GetError());
-			std::println("cwd = {}", std::filesystem::current_path().string());
-			std::println("image = {}", path);
 			return std::unexpected(EResourceError::LOAD_FAILED);
 		}
 

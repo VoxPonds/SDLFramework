@@ -12,8 +12,8 @@ export namespace engine::render
 {
 	struct ImageRect
 	{
-		core::Vector2 position;
-		core::Vector2 size;
+		math::Vector2 position;
+		math::Vector2 size;
 	};
 
 	enum class FlipMode : std::uint8_t

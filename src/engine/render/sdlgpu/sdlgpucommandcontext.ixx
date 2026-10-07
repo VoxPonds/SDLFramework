@@ -2,6 +2,8 @@ module;
 #include "SDL3/SDL_gpu.h"
 
 export module engine.render.sdlgpucommandcontext;
+
+import engine.render.sdlgpurenderpass;
 import engine.resource.resourceptr;
 import engine.platform.sdlptr;
 import std;
@@ -36,7 +38,7 @@ export namespace engine::render
     {
         private:
             platform::SdlGpuDeviceObPtr device_;
-            platform::GPUCommandBufferObPtr command_buffer_;
+            platform::SdlGpuCommandBufferObPtr command_buffer_;
 
             auto beginCopyPass() const -> std::expected<SDL_GPUCopyPass*, EGpuError>;
             static void endCopyPass(SDL_GPUCopyPass* copy_pass);
@@ -46,7 +48,7 @@ export namespace engine::render
 
         public:
             explicit SdlGpuCommandContext(platform::SdlGpuDeviceBrPtr device,
-                platform::GPUCommandBufferBrPtr command_buffer);
+                platform::SdlGpuCommandBufferBrPtr command_buffer);
 
             template <typename T> requires std::is_trivially_copyable_v<T>
             auto uploadBuffer(resource::SdlGpuBufferBrPtr buffer,
@@ -54,6 +56,8 @@ export namespace engine::render
 
             auto uploadBufferBytes(resource::SdlGpuBufferBrPtr gpu_buffer,
                 std::span<const std::byte> byte_data) const -> std::expected<void, EGpuError>;
+
+            auto acquireRenderPass(const SDL_GPUColorTargetInfo& color_target) const -> std::expected<SdlGpuRenderPass, EGpuError>;
 
             auto draw(const SDL_GPUColorTargetInfo& color_target,
                 resource::SdlGpuGraphicsPipelineBrPtr pipeline,

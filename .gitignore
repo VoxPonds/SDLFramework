@@ -12,6 +12,7 @@ CMakeUserPresets.json
 *.c
 *.ps1
 *.cmd
+*.csv
 
 # Prerequisites
 *.d

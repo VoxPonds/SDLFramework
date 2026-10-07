@@ -14,28 +14,34 @@ export namespace engine::render
     struct SpriteRenderCommand
     {
         const Sprite sprite;
-        core::Transform2D transform_2d;
+        math::Transform2D transform_2d;
         FlipMode flip_mode;
         //ERenderPass pass{ERenderPass::SPRITE_WORLD};
     };
 
-    struct DrawRect2DCommand
+    struct Rect2DCommand
     {
-        core::BaseRect rect;
-        core::BaseColor color;
+        math::BaseRect rect;
+        math::BaseColor color;
         bool filled;
+    };
+
+    struct SimpleText2DCommand
+    {
+        std::string_view text;
+        math::BaseColor color;
     };
 
     struct PrimitiveCommand2D
     {
-        std::variant<DrawRect2DCommand> primitive_2D;
-        core::Transform2D transform_2d;
+        std::variant<Rect2DCommand, SimpleText2DCommand> primitive_2D;
+        math::Transform2D transform_2d;
     };
 
     struct MeshRenderCommand
     {
         MeshData mesh;
-        core::Transform3D transform_3d;
+        math::Transform3D transform_3d;
     };
 
     using RenderCommand2D = std::variant<
@@ -43,7 +49,6 @@ export namespace engine::render
         PrimitiveCommand2D,
 	    std::monostate
     >;
-
 
     using RenderCommand3D = std::variant<
         MeshRenderCommand,

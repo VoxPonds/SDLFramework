@@ -1,5 +1,9 @@
 add_library(${PROJECT_NAME} STATIC)
 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PUBLIC /Zc:preprocessor)
+endif()
+
 target_compile_definitions(${PROJECT_NAME}
     PUBLIC
         GLM_FORCE_LEFT_HANDED

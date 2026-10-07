@@ -3,6 +3,7 @@ module;
 export module example2d.imgae;
 
 import engine.core.math;
+import engine.core.timer;
 import engine.render.sprite;
 import engine.render.apprenderer;
 import engine.render.framerecorder;
@@ -19,7 +20,7 @@ export
 		private:
 			engine::utilities::ObPtr<engine::resource::ResourceManager> resource_manager_borrowed_;
 			engine::render::Sprite sprite_;
-			engine::core::Transform2D transform_;
+			math::Transform2D transform_;
 			engine::render::AppRenderer app_renderer_;
 			engine::render::Camera2D camera;
 
@@ -30,7 +31,7 @@ export
 			);
 
 			void init();
-			void update();
+			void update(engine::core::Timer::DeltaTimeType dt);
 			void draw();
 
 		private:
@@ -54,16 +55,16 @@ void GameApp::init()
 	if (!loadResource()) return;
 }
 
-void GameApp::update()
+void GameApp::update(engine::core::Timer::DeltaTimeType dt)
 {
 	//camera.follow(engine::core::Vector2{ 0.0, 0.0 });
+	camera.position.x += 5.0f * dt;
+	camera.position.y += 5.0f * dt;
 }
 
 void GameApp::draw()
 {
 	app_renderer_.setActiveCamera(camera);
-	camera.position.x += 0.2f;
-	camera.position.y += 0.2f;
 	auto result = app_renderer_.drawSprite(sprite_, transform_, engine::render::FlipMode::FLIP_NONE);
 	if (!result)
 	{

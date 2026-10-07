@@ -4,6 +4,7 @@ module;
 export module engine.resource.resourcehandle;
 import engine.resource.imageasset;
 import std;
+import engine.render.mesh;
 
 export namespace engine::resource
 {

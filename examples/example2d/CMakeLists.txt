@@ -1,2 +1,3 @@
 add_subdirectory(test_image)
 add_subdirectory(demo_snake)
+add_subdirectory(demo_minesweeper)

@@ -6,7 +6,6 @@ export module engine.render.sdlrendereradapter;
 import engine.resource.imageadapter;
 import engine.resource.imageasset;
 import engine.resource.resourceptr;
-import engine.core.math;
 import engine.platform.sdlptr;
 import engine.render.framerecorder;
 import std;

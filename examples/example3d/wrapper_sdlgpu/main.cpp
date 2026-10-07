@@ -10,7 +10,7 @@ int main(int argc, char** argv)
     auto& runtime = engine::core::Runtime<WrapperSdlGpuTest>::instance(engine::render::ERenderBackend::SDL_GPU);
     runtime.init();
 
-    while (runtime.isRunning())
+    while (runtime)
     {
         runtime.beginFrame();
 

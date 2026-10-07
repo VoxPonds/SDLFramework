@@ -2,6 +2,7 @@ module;
 #include "SDL3/SDL_render.h"
 
 export module engine.platform.sdlptr;
+
 import engine.utilities;
 import std;
 
@@ -28,16 +29,22 @@ export namespace engine::platform
 		static constexpr auto destroy_func = SDL_DestroyGPUDevice;
 	};
 
+	template<>
+	struct SdlDeleterTraits<SDL_GPURenderPass>
+	{
+		static constexpr auto destroy_func = SDL_EndGPURenderPass;
+	};
+
 	template<typename T>
 	struct SdlDeleter
 	{
-		void operator()(T* ptr) const
+		void operator()(T* ptr) const noexcept
 		{
 			if (ptr) SdlDeleterTraits<T>::destroy_func(ptr);
 		}
 	};
 
-	template<auto DestroyFunc> //NTTP 
+	template<auto DestroyFunc>
 	struct SdlFuncDeleter
 	{
 		template<typename T>
@@ -54,15 +61,19 @@ export namespace engine::platform
 	using SdlRendererDeviceObPtr = utilities::ObPtr<SDL_Renderer>;
 	using SdlRendererDeviceBrPtr = utilities::BrPtr<SDL_Renderer>;
 
-	using WindowPtr = SdlPtr<SDL_Window>;
-	using WindowObPtr = utilities::ObPtr<SDL_Window>;
+	using SdlWindowPtr = SdlPtr<SDL_Window>;
+	using SdlWindowObPtr = utilities::ObPtr<SDL_Window>;
+	using SdlWindowBrPtr = utilities::BrPtr<SDL_Window>;
 
 	using SdlGpuDevicePtr = SdlPtr<SDL_GPUDevice>;
 	using SdlGpuDeviceObPtr = utilities::ObPtr<SDL_GPUDevice>;
 	using SdlGpuDeviceBrPtr = utilities::BrPtr<SDL_GPUDevice>;
 
-	using GPUCommandBufferObPtr =  utilities::ObPtr<SDL_GPUCommandBuffer>;
-	using GPUCommandBufferBrPtr = utilities::BrPtr<SDL_GPUCommandBuffer>;
+	using SdlGpuCommandBufferObPtr =  utilities::ObPtr<SDL_GPUCommandBuffer>;
+	using SdlGpuCommandBufferBrPtr = utilities::BrPtr<SDL_GPUCommandBuffer>;
 
+	using SdlGpuRenderPassPtr = SdlPtr<SDL_GPURenderPass>;
+	using SdlGpuRenderPassObPtr = utilities::ObPtr<SDL_GPURenderPass>;
+	using SdlGpuRenderPassBrPtr = utilities::BrPtr<SDL_GPURenderPass>;
 
 }

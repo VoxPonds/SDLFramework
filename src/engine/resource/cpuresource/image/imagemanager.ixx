@@ -30,8 +30,8 @@ export namespace engine::resource
 			ImageManager(ImageManager&&) = delete;
 			ImageManager& operator=(ImageManager&&) = delete;
 			
-			std::expected<core::Vector2, EResourceError>  getImageSize(const ImageKey& key);
-			std::expected<core::Vector2, EResourceError>  getImageSize(ImageObPtr texture_ptr) const;
+			std::expected<math::Vector2, EResourceError>  getImageSize(const ImageKey& key);
+			std::expected<math::Vector2, EResourceError>  getImageSize(ImageObPtr texture_ptr) const;
 			std::expected<ImageHandle, EResourceError> findImage(const ImageKey& key) const;
 			std::expected<ImageHandle, EResourceError> loadImage(const ImageKey& key);
 			std::expected<ImageObPtr, EResourceError> getImage(ImageHandle handle);
@@ -39,7 +39,7 @@ export namespace engine::resource
 			void clearImages();                                       
 	};
 
-	std::expected<core::Vector2, EResourceError> ImageManager::getImageSize(const ImageKey& key)
+	std::expected<math::Vector2, EResourceError> ImageManager::getImageSize(const ImageKey& key)
 	{
 		if (auto handle = findImage(key))
 		{
@@ -61,7 +61,7 @@ export namespace engine::resource
 
 namespace engine::resource
 {
-	std::expected<core::Vector2, EResourceError> ImageManager::getImageSize(ImageObPtr texture_ptr) const
+	std::expected<math::Vector2, EResourceError> ImageManager::getImageSize(ImageObPtr texture_ptr) const
 	{
 		if (!texture_ptr) return std::unexpected(EResourceError::NULL_PTR);
 
@@ -78,13 +78,11 @@ namespace engine::resource
 	{
 		return resource_cache_.load(
 			key,
-			 [this](const ImageKey& k) -> ResourcePtr<ImageAsset>
+			[](const ImageKey& k) -> ResourcePtr<ImageAsset>
 			{
 				auto result = adapter::loadImage(k.path.string());
 				if (!result) return nullptr;
-				return makeOwnRs<ImageAsset>(
-					std::move(result.value())
-				);
+				return makeOwnRs<ImageAsset>(std::move(result.value()));
 			});
 	}
 

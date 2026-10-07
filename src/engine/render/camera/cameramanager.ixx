@@ -26,23 +26,23 @@ export namespace engine::render
 	            std::optional<SDL_Rect> limit_bounds = std::nullopt
 	        );
 
-	        void move(core::Vector2 offset);
+	        void move(math::Vector2 offset);
 
-	        void setPosition(core::Vector2 position);
+	        void setPosition(math::Vector2 position);
 
-	        void setViewportSize(core::Vector2 viewport_size);
+	        void setViewportSize(math::Vector2 viewport_size);
 
-			void follow(core::Vector2 target);
+			void follow(math::Vector2 target);
 
 	        void setLimitBounds(std::optional<SDL_Rect> bounds);
 
-			core::Vector2 worldToScreen(const core::Vector2 world_pos, core::Vector2 scroll_factor = { 1.0f, 1.0f }) const;
+			math::Vector2 worldToScreen(math::Vector2 world_pos, math::Vector2 scroll_factor = { 1.0f, 1.0f }) const;
 
-			core::Vector2 screenToWorld(core::Vector2 screen_pos) const;
+			math::Vector2 screenToWorld(math::Vector2 screen_pos) const;
 
-	        const core::Vector2& getPosition() const;
+	        const math::Vector2& getPosition() const;
 
-	        const core::Vector2& getViewportSize() const;
+	        const math::Vector2& getViewportSize() const;
 
 	        const std::optional<SDL_Rect>& getLimitBounds() const;
 

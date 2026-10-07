@@ -6,6 +6,7 @@ import engine.core.eventtype;
 import engine.core.math;
 import engine.core.timer;
 import engine.core.appconfig;
+import engine.core.appcontext;
 import engine.render.framedata;
 import engine.render.framerecorder;
 import engine.render.apprenderer;
@@ -62,26 +63,26 @@ export
         bool direction_pending_ {false};
     };
 
-    inline constexpr engine::core::BaseColor white{
+    inline constexpr math::BaseColor color_white{
         .r {1.0f},
         .g {1.0f},
         .b {1.0f},
         .a {1.0f}
     };
-
+    using engine::core::Timer;
     struct SnakeApp
     {
         using SnakeInputMapping = engine::platform::InputMappingList<SnakeAction>;
         using SnakeInputSystem = engine::platform::InputSystem<SnakeAction>;
-        static consteval auto appConfig() -> engine::core::AppConfig;
-        inline static constinit engine::core::AppConfig app_config_ {};
+        static consteval auto config() -> engine::core::AppConfig;
+        static constinit engine::core::AppConfig app_config_;
 
         private:
-            static constexpr int board_width {10};
-            static constexpr int board_height {10};
-            static constexpr int cell_size_ {32};
+            static constexpr std::size_t board_width {10};
+            static constexpr std::size_t board_height {10};
+            static constexpr std::size_t cell_size_ {32};
             inline static float move_interval {0.15f};
-            float move_timer_ {0.0f};
+            inline static float move_timer_ {0.0f};
 
             engine::utilities::ObPtr<engine::resource::ResourceManager> resource_manager_borrowed_;
             engine::render::AppRenderer app_renderer_;
@@ -89,11 +90,11 @@ export
             SnakeInputSystem input_system_;
 
         public:
-            SnakeApp(engine::resource::ResourceManager& resource_manager_borrowed, engine::render::FrameRecorder& recorder);
+            SnakeApp(const engine::core::AppContext& context);
             void init();
             void beginFrame();
             void processEvent(const engine::core::Event& event);
-            void update();
+            void update(Timer::DeltaTimeType dt);
             void draw();
             void endFrame();
 
@@ -101,20 +102,21 @@ export
             Snake snake_;
             Food food_;
             bool game_over_;
-            std::mt19937 rng_ {std::random_device{}()};
+            std::mt19937 rng_;
             void moveSnake();
             void spawnFood();
             bool containsSnake(GridPos position) const;
-            bool isOpposite(Direction current, Direction next) const;
+
+            static bool isOpposite(Direction current, Direction next);
             void drawFood();
             void drawSnake();
     };
 }
 
-consteval auto SnakeApp::appConfig() -> engine::core::AppConfig
+consteval auto SnakeApp::config() -> engine::core::AppConfig
 {
     return engine::core::AppConfig{
-        .window_config_ {
+        .window_config_{
             .width {board_width * cell_size_},
             .height {board_height * cell_size_},
             .title {"Demo Snake"},
@@ -123,39 +125,62 @@ consteval auto SnakeApp::appConfig() -> engine::core::AppConfig
     };
 }
 
-static SnakeApp::SnakeInputMapping mappingConfig()
+constinit engine::core::AppConfig SnakeApp::app_config_ = config();
+
+static constexpr SnakeApp::SnakeInputMapping mappingConfig()
 {
     using namespace engine::platform;
     using namespace input;
 
     return SnakeApp::SnakeInputMapping {
-        { SnakeAction::ACTION_UP, {
-            {
-                pressed(EInputCode::KEY_W) |
-                pressed(EInputCode::KEY_UP) |
-                pressed(EInputCode::KEY_SPACE) >> pressed(EInputCode::KEY_SPACE)
-            }, MODE_TOGGLE}
+        {
+            SnakeAction::ACTION_UP, {
+                {
+                    pressed(EKeyCode::KEY_W) |
+                    pressed(EKeyCode::KEY_UP) |
+                    pressed(EKeyCode::KEY_SPACE) >> pressed(EKeyCode::KEY_SPACE)|
+                    click(EClickRegion::SCREEN_TOP)
+                },
+                ActionMode::MODE_TOGGLE
+            }
         },
-        { SnakeAction::ACTION_LEFT,{
-            { {pressed(EInputCode::KEY_A)}, {pressed(EInputCode::KEY_LEFT)} }, MODE_TOGGLE}
+        {
+            SnakeAction::ACTION_LEFT,{
+                {
+                    {pressed(EKeyCode::KEY_A)}, {pressed(EKeyCode::KEY_LEFT)},
+                    {click(EClickRegion::SCREEN_LEFT)}
+                },
+                ActionMode::MODE_TOGGLE
+            }
         },
-        { SnakeAction::ACTION_DOWN, {
-            { {pressed(EInputCode::KEY_S)}, {pressed(EInputCode::KEY_DOWN)} }, MODE_TOGGLE}
+        {
+            SnakeAction::ACTION_DOWN, {
+                {
+                    {pressed(EKeyCode::KEY_S)}, {pressed(EKeyCode::KEY_DOWN)},
+                    {click(EClickRegion::SCREEN_BOTTOM)}
+                },
+                ActionMode::MODE_TOGGLE
+            }
         },
-        { SnakeAction::ACTION_RIGHT, {
-            { {pressed(EInputCode::KEY_D)}, {pressed(EInputCode::KEY_RIGHT)} }, MODE_TOGGLE}
+        {
+            SnakeAction::ACTION_RIGHT, {
+                {
+                    {pressed(EKeyCode::KEY_D)}, {pressed(EKeyCode::KEY_RIGHT)},
+                    {click(EClickRegion::SCREEN_RIGHT)}
+                },
+                ActionMode::MODE_TOGGLE
+            }
         },
     };
 }
 
-SnakeApp::SnakeApp(engine::resource::ResourceManager& resource_manager_borrowed, engine::render::FrameRecorder& recorder) :
-    resource_manager_borrowed_(resource_manager_borrowed),
-    app_renderer_(recorder),
+SnakeApp::SnakeApp(const engine::core::AppContext& context) :
+    resource_manager_borrowed_(context.manager),
+    app_renderer_(context.recorder),
     input_mapping(mappingConfig()),
-    input_system_(input_mapping),
-    snake_(), food_(), game_over_(false)
+    input_system_(input_mapping, app_config_),
+    snake_(), food_(), game_over_(false), rng_(std::random_device{}())
 {
-    app_config_ = appConfig();
 }
 
 void SnakeApp::init()
@@ -182,11 +207,11 @@ void SnakeApp::processEvent(const engine::core::Event& event)
     input_system_.processEvent(event);
 }
 
-void SnakeApp::update()
+void SnakeApp::update(Timer::DeltaTimeType dt)
 {
     if (game_over_) return;
     if (!snake_.direction_pending_)
-    if (input_system_.getActionEvent(SnakeAction::ACTION_UP))
+    if (input_system_.getAction(SnakeAction::ACTION_UP))
     {
         if (!isOpposite(snake_.direction_, Direction::UP))
         {
@@ -194,7 +219,7 @@ void SnakeApp::update()
             snake_.direction_pending_ = true;
         }
     }
-    else if (input_system_.getActionEvent(SnakeAction::ACTION_LEFT))
+    else if (input_system_.getAction(SnakeAction::ACTION_LEFT))
     {
         if (!isOpposite(snake_.direction_, Direction::LEFT))
         {
@@ -202,7 +227,7 @@ void SnakeApp::update()
             snake_.direction_pending_ = true;
         }
     }
-    else if (input_system_.getActionEvent(SnakeAction::ACTION_DOWN))
+    else if (input_system_.getAction(SnakeAction::ACTION_DOWN))
     {
         if (!isOpposite(snake_.direction_, Direction::DOWN))
         {
@@ -210,7 +235,7 @@ void SnakeApp::update()
             snake_.direction_pending_ = true;
         }
     }
-    else if (input_system_.getActionEvent(SnakeAction::ACTION_RIGHT))
+    else if (input_system_.getAction(SnakeAction::ACTION_RIGHT))
     {
         if (!isOpposite(snake_.direction_, Direction::RIGHT))
         {
@@ -219,14 +244,16 @@ void SnakeApp::update()
         }
     }
 
-    move_timer_ += engine::core::Timer::deltaTime();
-
-    if (move_timer_ >= move_interval)
+    constexpr std::size_t max_steps = 4;
+    std::size_t steps = 0;
+    move_timer_ += dt;
+    while (move_timer_ >= move_interval && steps < max_steps)
     {
         move_timer_ -= move_interval;
         snake_.direction_ = snake_.next_direction_;
         snake_.direction_pending_ = false;
         moveSnake();
+        ++steps;
     }
 
     input_system_.reset();
@@ -300,12 +327,12 @@ void SnakeApp::moveSnake()
 
 void SnakeApp::spawnFood()
 {
-    std::uniform_int_distribution x_distribution{
+    std::uniform_int_distribution<> x_distribution{
         0,
         board_width - 1
     };
 
-    std::uniform_int_distribution y_distribution{
+    std::uniform_int_distribution<> y_distribution{
         0,
         board_height - 1
     };
@@ -330,7 +357,7 @@ bool SnakeApp::containsSnake(const GridPos position) const
     return std::ranges::find(snake_.segments, position) != snake_.segments.end();
 }
 
-bool SnakeApp::isOpposite(Direction current, Direction next) const
+bool SnakeApp::isOpposite(Direction current, Direction next)
 {
     return
         (current == Direction::UP    && next == Direction::DOWN) ||
@@ -348,7 +375,7 @@ void SnakeApp::drawFood()
             .y {food_.position.y + y}
         };
         const auto result = app_renderer_.drawRectangle(
-            engine::render::DrawRect2DCommand{
+            engine::render::Rect2DCommand{
                 .rect {
                     .position {
                         cell.x * cell_size_,
@@ -356,10 +383,10 @@ void SnakeApp::drawFood()
                     },
                     .size {cell_size_, cell_size_}
                 },
-                .color {white},
+                .color {color_white},
                 .filled {true}
             },
-            engine::core::Transform2D{
+            math::Transform2D{
                 .position {0.0f, 0.0f},
             }
         );
@@ -375,7 +402,7 @@ void SnakeApp::drawSnake()
     for (const auto&[x, y] : snake_.segments)
     {
         const auto result = app_renderer_.drawRectangle(
-            engine::render::DrawRect2DCommand{
+            engine::render::Rect2DCommand{
                 .rect {
                     .position {
                         x * cell_size_,
@@ -386,10 +413,10 @@ void SnakeApp::drawSnake()
                         cell_size_
                     }
                 },
-                .color {white},
+                .color {color_white},
                 .filled {true}
             },
-            engine::core::Transform2D{
+            math::Transform2D{
                 .position {0.0f, 0.0f}
             }
         );

@@ -1,10 +1,10 @@
 module;
 #include <filesystem>
-
 #include "SDL3/SDL_render.h"
 
 export module engine.resource.resourcetraits;
 import engine.resource.imageasset;
+import engine.render.mesh;
 import engine.resource.resourcehandle;
 import engine.utilities;
 import std;

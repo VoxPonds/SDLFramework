@@ -5,7 +5,6 @@ export module engine.render.framerecorder;
 import engine.render.sprite;
 import engine.render.framedata;
 import engine.render.camera;
-import engine.core.math;
 import engine.utilities;
 import std;
 

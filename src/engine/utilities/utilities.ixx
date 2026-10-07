@@ -7,7 +7,7 @@ import std;
 export namespace engine::utilities
 {
 	template <bool condition>
-	constexpr void assertion(std::string_view message)
+	constexpr void assertion(std::string_view message = std::string{}) noexcept
 	{
 		static_assert(condition);
 	}

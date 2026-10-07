@@ -5,6 +5,7 @@ module;
 export module engine.platform.sdlwindow;
 import engine.platform.sdlptr;
 import engine.core.appconfig;
+import engine.core.math;
 import std;
 
 export namespace engine::platform
@@ -12,18 +13,21 @@ export namespace engine::platform
 	class SdlWindow final
 	{
 		private:
-			//using WindowPtr = std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)>;
-			WindowPtr window_ptr{};
-			explicit SdlWindow(WindowPtr window_ptr);
+			SdlWindowPtr window_ptr{};
+			explicit SdlWindow(SdlWindowPtr window_ptr);
 			static std::expected<SdlWindow, std::string> create();
 
 		public:
 			SdlWindow(int width, int height, const std::string_view title, std::uint64_t flags);
-			SdlWindow(const core::WindowConfig &config);
+			explicit SdlWindow(const core::WindowConfig &config);
 			~SdlWindow() = default;
 
-			WindowObPtr getPtr() const;
+			SdlWindowObPtr getPtr() const;
 			SDL_Window& getRef() const;
+
+			auto getWindowSize() const -> math::Vector2;
+
+			static auto getWindowSizeFromID(SDL_WindowID id) -> math::Vector2;
 
 			SdlWindow(const SdlWindow&) = delete;
 			SdlWindow& operator=(const SdlWindow&) = delete;
@@ -38,7 +42,7 @@ namespace engine::platform
 		const std::string_view title, const std::uint64_t flags)
 	{
 		/*window_ptr = WindowPtr(SDL_CreateWindow("",1280,720,SDL_WINDOW_RESIZABLE));*/
-		window_ptr = WindowPtr(
+		window_ptr = SdlWindowPtr(
 			SDL_CreateWindow(
 				title.data(),
 				width,
@@ -55,7 +59,7 @@ namespace engine::platform
 
 	SdlWindow::SdlWindow(const core::WindowConfig& config)
 	{
-		window_ptr = WindowPtr(
+		window_ptr = SdlWindowPtr(
 			SDL_CreateWindow(
 				config.title.data(),
 				config.width,
@@ -70,14 +74,14 @@ namespace engine::platform
 		}
 	}
 
-	SdlWindow::SdlWindow(WindowPtr window_ptr) : window_ptr(std::move(window_ptr))
+	SdlWindow::SdlWindow(SdlWindowPtr window_ptr) : window_ptr(std::move(window_ptr))
 	{
 
 	}
 
-	WindowObPtr SdlWindow::getPtr() const
+	SdlWindowObPtr SdlWindow::getPtr() const
 	{
-		return WindowObPtr(window_ptr);
+		return SdlWindowObPtr(window_ptr);
 	}
 
 	SDL_Window& SdlWindow::getRef() const
@@ -85,9 +89,31 @@ namespace engine::platform
 		return *window_ptr.get();
 	}
 
+	auto SdlWindow::getWindowSize() const -> math::Vector2
+	{
+		int width{};
+		int height{};
+
+		SDL_GetWindowSize(window_ptr.get(), &width, &height);
+
+		return {width, height};
+	}
+
+	auto SdlWindow::getWindowSizeFromID(SDL_WindowID id) -> math::Vector2
+	{
+		int width{};
+		int height{};
+
+		if (SDL_Window* window = SDL_GetWindowFromID(id))
+		{
+			SDL_GetWindowSize(window, &width, &height);
+		}
+		return {width, height};
+	}
+
 	std::expected<SdlWindow, std::string> SdlWindow::create()
 	{
-		auto ptr = WindowPtr(
+		auto ptr = SdlWindowPtr(
 			SDL_CreateWindow("Hello World", 800, 600, SDL_WINDOW_RESIZABLE)
 		);
 		if (!ptr)
